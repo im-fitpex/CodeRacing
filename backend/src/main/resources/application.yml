@@ -1,0 +1,48 @@
+spring:
+  application:
+    name: rustore-backend
+
+  datasource:
+    url: jdbc:clickhouse://localhost:8123/rustore
+    username: default
+    password: ${CLICKHOUSE_PASSWORD:}
+    driver-class-name: com.clickhouse.jdbc.ClickHouseDriver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 10000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=1000,expireAfterWrite=1h
+
+server:
+  port: 8080
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain
+
+clickhouse:
+  socket-timeout: 30000
+  connection-timeout: 10000
+  max-execution-time: 300
+  async-insert: true
+  wait-for-async-insert: true
+
+logging:
+  level:
+    com.rustore: DEBUG
+    org.springframework.web: INFO
+    com.clickhouse: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
