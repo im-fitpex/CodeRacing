@@ -4,7 +4,7 @@ spring:
 
   datasource:
     url: jdbc:clickhouse://localhost:8123/rustore
-    username: default
+    username: "default"
     password: "chupep"
     driver-class-name: com.clickhouse.jdbc.ClickHouseDriver
     hikari:
