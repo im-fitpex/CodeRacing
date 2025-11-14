@@ -74,7 +74,7 @@ public class AppController {
             @RequestParam(defaultValue = "10") int limit) {
         return ResponseEntity.ok(recommendationService.getRecommendations(userId, limit));
     }
-
+// nen
     @PostMapping("/{id}/install")
     public ResponseEntity<Void> trackInstall(@PathVariable Integer id,
                                              @RequestParam Integer userId) {
