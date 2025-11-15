@@ -109,3 +109,8 @@ INSERT INTO rustore.screenshots (id, app_id, url, order_index) VALUES
                                                                    (8, 6, '/screenshots/yandexgo_1.jpg', 1),
                                                                    (9, 8, '/screenshots/vk_1.jpg', 1),
                                                                    (10, 8, '/screenshots/vk_2.jpg', 2);
+
+-- Insert Sample Users
+INSERT INTO rustore.users (id, username, email, vk_id, is_admin) VALUES
+                                                                     (1, 'admin', 'admin@rustore.ru', 0, 1),
+                                                                     (2, 'testuser', 'test@example.com', 12345678, 0);

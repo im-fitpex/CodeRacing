@@ -1,6 +1,5 @@
 package stankin.backend.controller;
 
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,14 +23,14 @@ public class AppController {
         return ResponseEntity.ok(appService.getAllApps());
     }
 
-//    @GetMapping("/{id}")
-//    public ResponseEntity<AppDetailDTO> getAppById(@PathVariable Integer id,
-//                                                   @RequestParam(required = false) Integer userId) {
-//        if (userId != null) {
-//            recommendationService.trackActivity(userId, id, "view");
-//        }
-//        return ResponseEntity.ok(appService.getAppById(id));
-//    }
+    @GetMapping("/{id}")
+    public ResponseEntity<AppDetailDTO> getAppById(@PathVariable Integer id,
+                                                   @RequestParam(required = false) Integer userId) {
+        if (userId != null) {
+            recommendationService.trackActivity(userId, id, "view");
+        }
+        return ResponseEntity.ok(appService.getAppById(id));
+    }
 
     @GetMapping("/category/{categoryId}")
     public ResponseEntity<List<AppDTO>> getAppsByCategory(@PathVariable Integer categoryId) {
@@ -74,7 +73,7 @@ public class AppController {
             @RequestParam(defaultValue = "10") int limit) {
         return ResponseEntity.ok(recommendationService.getRecommendations(userId, limit));
     }
-// nen
+
     @PostMapping("/{id}/install")
     public ResponseEntity<Void> trackInstall(@PathVariable Integer id,
                                              @RequestParam Integer userId) {

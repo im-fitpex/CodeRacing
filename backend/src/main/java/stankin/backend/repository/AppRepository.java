@@ -10,6 +10,7 @@ import stankin.backend.model.App;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,29 +21,47 @@ public class AppRepository {
 
     private final JdbcTemplate jdbcTemplate;
 
-    private final RowMapper<App> appRowMapper = (rs, rowNum) -> App.builder()
-            .id(rs.getInt("id"))
-            .name(rs.getString("name"))
-            .packageName(rs.getString("package_name"))
-            .developer(rs.getString("developer"))
-            .categoryId(rs.getInt("category_id"))
-            .description(rs.getString("description"))
-            .shortDescription(rs.getString("short_description"))
-            .version(rs.getString("version"))
-            .sizeMb(rs.getFloat("size_mb"))
-            .rating(rs.getFloat("rating"))
-            .downloads(rs.getLong("downloads"))
-            .price(rs.getFloat("price"))
-            .isFree(rs.getBoolean("is_free"))
-            .ageRating(rs.getString("age_rating"))
-            .iconUrl(rs.getString("icon_url"))
-            .apkUrl(rs.getString("apk_url"))
-            .createdAt(rs.getTimestamp("created_at").toLocalDateTime())
-            .updatedAt(rs.getTimestamp("updated_at").toLocalDateTime())
-            .isEditorChoice(rs.getBoolean("is_editor_choice"))
-            .isNew(rs.getBoolean("is_new"))
-            .isPopular(rs.getBoolean("is_popular"))
-            .build();
+    private final RowMapper<App> appRowMapper = (rs, rowNum) -> {
+        try {
+            return App.builder()
+                    .id(rs.getInt("id"))
+                    .name(rs.getString("name"))
+                    .packageName(rs.getString("package_name"))
+                    .developer(rs.getString("developer"))
+                    .categoryId(rs.getInt("category_id"))
+                    .description(rs.getString("description"))
+                    .shortDescription(rs.getString("short_description"))
+                    .version(rs.getString("version"))
+                    .sizeMb(rs.getFloat("size_mb"))
+                    .rating(rs.getFloat("rating"))
+                    .downloads(rs.getLong("downloads"))
+                    .price(rs.getFloat("price"))
+                    .isFree(rs.getInt("is_free") == 1)  // Исправлено для ClickHouse
+                    .ageRating(rs.getString("age_rating"))
+                    .iconUrl(rs.getString("icon_url"))
+                    .apkUrl(rs.getString("apk_url"))
+                    .createdAt(getTimestamp(rs, "created_at"))  // Исправлено
+                    .updatedAt(getTimestamp(rs, "updated_at"))  // Исправлено
+                    .isEditorChoice(rs.getInt("is_editor_choice") == 1)  // Исправлено
+                    .isNew(rs.getInt("is_new") == 1)  // Исправлено
+                    .isPopular(rs.getInt("is_popular") == 1)  // Исправлено
+                    .build();
+        } catch (Exception e) {
+            log.error("Error mapping row for app: {}", rs.getInt("id"), e);
+            throw e;
+        }
+    };
+
+    // Вспомогательный метод для безопасного получения timestamp
+    private LocalDateTime getTimestamp(ResultSet rs, String columnName) throws SQLException {
+        try {
+            java.sql.Timestamp timestamp = rs.getTimestamp(columnName);
+            return timestamp != null ? timestamp.toLocalDateTime() : LocalDateTime.now();
+        } catch (SQLException e) {
+            log.warn("Could not get timestamp for column {}, using current time", columnName);
+            return LocalDateTime.now();
+        }
+    }
 
     public List<App> findAll() {
         String sql = "SELECT * FROM rustore.apps ORDER BY rating DESC, downloads DESC";

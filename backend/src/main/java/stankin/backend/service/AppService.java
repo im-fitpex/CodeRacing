@@ -34,55 +34,55 @@ public class AppService {
                 .collect(Collectors.toList());
     }
 
-//    public AppDetailDTO getAppById(Integer id) {
-//        App app = appRepository.findById(id)
-//                .orElseThrow(() -> new RuntimeException("App not found"));
-//
-//        List<String> screenshots = getScreenshots(id);
-//        List<AppDTO> similarApps = appRepository.findSimilarApps(app.getCategoryId(), id, 5)
-//                .stream()
-//                .map(this::convertToDTO)
-//                .collect(Collectors.toList());
-//
-//        List<ReviewDTO> reviews = reviewRepository.findByAppId(id, 10)
-//                .stream()
-//                .map(review -> ReviewDTO.builder()
-//                        .id(review.getId())
-//                        .appId(review.getAppId())
-//                        .userId(review.getUserId())
-//                        .rating(review.getRating())
-//                        .comment(review.getComment())
-//                        .helpfulCount(review.getHelpfulCount())
-//                        .createdAt(review.getCreatedAt())
-//                        .build())
-//                .collect(Collectors.toList());
-//
-//        String categoryName = categoryRepository.findById(app.getCategoryId())
-//                .map(Category::getName)
-//                .orElse("Неизвестно");
-//
-//        return AppDetailDTO.builder()
-//                .id(app.getId())
-//                .name(app.getName())
-//                .packageName(app.getPackageName())
-//                .developer(app.getDeveloper())
-//                .category(categoryName)
-//                .description(app.getDescription())
-//                .shortDescription(app.getShortDescription())
-//                .version(app.getVersion())
-//                .sizeMb(app.getSizeMb())
-//                .rating(app.getRating())
-//                .downloads(app.getDownloads())
-//                .price(app.getPrice())
-//                .isFree(app.getIsFree())
-//                .ageRating(app.getAgeRating())
-//                .iconUrl(app.getIconUrl())
-//                .apkUrl(app.getApkUrl())
-//                .screenshots(screenshots)
-//                .similarApps(similarApps)
-//                .reviews(reviews)
-//                .build();
-//    }
+    public AppDetailDTO getAppById(Integer id) {
+        App app = appRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("App not found"));
+
+        List<String> screenshots = getScreenshots(id);
+        List<AppDTO> similarApps = appRepository.findSimilarApps(app.getCategoryId(), id, 5)
+                .stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        List<ReviewDTO> reviews = reviewRepository.findByAppId(id, 10)
+                .stream()
+                .map(review -> ReviewDTO.builder()
+                        .id(review.getId())
+                        .appId(review.getAppId())
+                        .userId(review.getUserId())
+                        .rating(review.getRating())
+                        .comment(review.getComment())
+                        .helpfulCount(review.getHelpfulCount())
+                        .createdAt(review.getCreatedAt())
+                        .build())
+                .collect(Collectors.toList());
+
+        String categoryName = categoryRepository.findById(app.getCategoryId())
+                .map(Category::getName)
+                .orElse("Неизвестно");
+
+        return AppDetailDTO.builder()
+                .id(app.getId())
+                .name(app.getName())
+                .packageName(app.getPackageName())
+                .developer(app.getDeveloper())
+                .category(categoryName)
+                .description(app.getDescription())
+                .shortDescription(app.getShortDescription())
+                .version(app.getVersion())
+                .sizeMb(app.getSizeMb())
+                .rating(app.getRating())
+                .downloads(app.getDownloads())
+                .price(app.getPrice())
+                .isFree(app.getIsFree())
+                .ageRating(app.getAgeRating())
+                .iconUrl(app.getIconUrl())
+                .apkUrl(app.getApkUrl())
+                .screenshots(screenshots)
+                .similarApps(similarApps)
+                .reviews(reviews)
+                .build();
+    }
 
     public List<AppDTO> getAppsByCategory(Integer categoryId) {
         return appRepository.findByCategory(categoryId).stream()
