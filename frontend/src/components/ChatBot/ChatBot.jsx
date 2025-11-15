@@ -1,16 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FiMessageCircle, FiX, FiSend, FiMinimize2 } from 'react-icons/fi';
-import { useAuth } from '../../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import ReactMarkdown from 'react-markdown';
-import './ChatBot.css';
+import React, { useState, useEffect, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { FiMessageCircle, FiX, FiSend, FiMinimize2 } from "react-icons/fi";
+import { useAuth } from "../../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+import ReactMarkdown from "react-markdown";
+import "./ChatBot.css";
 
 const ChatBot = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
   const { user, isAuthenticated } = useAuth();
@@ -21,12 +21,14 @@ const ChatBot = () => {
       const welcomeMsg = isAuthenticated
         ? `Привет! Я Максим Ферштапенович 👋 Готов помочь тебе с выбором приложений!`
         : `Привет! Я Максим Ферштапенович 👋 Я помогу тебе найти нужные приложения. Авторизуйся, чтобы получить персональные рекомендации! 🎯`;
-      
-      setMessages([{
-        role: 'assistant',
-        content: welcomeMsg,
-        timestamp: new Date().toISOString()
-      }]);
+
+      setMessages([
+        {
+          role: "assistant",
+          content: welcomeMsg,
+          timestamp: new Date().toISOString(),
+        },
+      ]);
     }
   }, [isOpen, isAuthenticated]);
 
@@ -35,67 +37,69 @@ const ChatBot = () => {
   }, [messages]);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   const sendMessage = async () => {
     if (!input.trim() || loading) return;
 
     const userMessage = {
-      role: 'user',
+      role: "user",
       content: input,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     };
 
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
+    setMessages((prev) => [...prev, userMessage]);
+    setInput("");
     setLoading(true);
 
     try {
-      const installedApps = isAuthenticated 
-        ? JSON.parse(localStorage.getItem('installedApps') || '[]')
+      const installedApps = isAuthenticated
+        ? JSON.parse(localStorage.getItem("installedApps") || "[]")
         : [];
 
-      const response = await fetch('http://localhost:8080/api/chat', {
-        method: 'POST',
+      const response = await fetch("http://localhost:8080/api/chat", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          messages: [...messages, userMessage].map(m => ({
+          messages: [...messages, userMessage].map((m) => ({
             role: m.role,
-            content: m.content
+            content: m.content,
           })),
           userId: user?.id || null,
-          installedApps: installedApps
-        })
+          installedApps: installedApps,
+        }),
       });
 
       const data = await response.json();
 
       const assistantMessage = {
-        role: 'assistant',
+        role: "assistant",
         content: data.message,
         suggestions: data.suggestions || [],
-        timestamp: data.timestamp
+        timestamp: data.timestamp,
       };
 
-      setMessages(prev => [...prev, assistantMessage]);
-
+      setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
-      console.error('Chat error:', error);
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: 'Извини, произошла ошибка 😔 Попробуй еще раз.',
-        timestamp: new Date().toISOString()
-      }]);
+      console.error("Chat error:", error);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant",
+          content: "Извини, произошла ошибка 😔 Попробуй еще раз.",
+          timestamp: new Date().toISOString(),
+        },
+      ]);
     } finally {
       setLoading(false);
     }
   };
 
   const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
     }
@@ -130,16 +134,16 @@ const ChatBot = () => {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            className={`chat-window ${isMinimized ? 'minimized' : ''}`}
+            className={`chat-window ${isMinimized ? "minimized" : ""}`}
             initial={{ opacity: 0, y: 50, scale: 0.9 }}
-            animate={{ 
-              opacity: 1, 
-              y: 0, 
+            animate={{
+              opacity: 1,
+              y: 0,
               scale: 1,
-              height: isMinimized ? '60px' : '600px'
+              height: isMinimized ? "60px" : "600px",
             }}
             exit={{ opacity: 0, y: 50, scale: 0.9 }}
-            transition={{ type: 'spring', damping: 25 }}
+            transition={{ type: "spring", damping: 30, stiffness: 300 }} // Быстрее
           >
             {/* Header */}
             <div className="chat-header">
@@ -154,14 +158,14 @@ const ChatBot = () => {
                 </span>
               </div>
               <div className="chat-actions">
-                <button 
+                <button
                   className="chat-action-btn"
                   onClick={() => setIsMinimized(!isMinimized)}
                   title={isMinimized ? "Развернуть" : "Свернуть"}
                 >
                   <FiMinimize2 />
                 </button>
-                <button 
+                <button
                   className="chat-action-btn"
                   onClick={() => setIsOpen(false)}
                   title="Закрыть"
@@ -177,37 +181,38 @@ const ChatBot = () => {
                 <div className="chat-messages">
                   {messages.map((msg, idx) => (
                     <div key={idx} className={`message ${msg.role}`}>
-                      {msg.role === 'assistant' && (
+                      {msg.role === "assistant" && (
                         <div className="message-avatar">МФ</div>
                       )}
                       <div className="message-content">
                         <div className="message-bubble">
                           <ReactMarkdown
                             components={{
-                              a: ({node, ...props}) => (
-                                <a 
-                                  {...props} 
-                                  target="_blank" 
+                              a: ({ node, ...props }) => (
+                                <a
+                                  {...props}
+                                  target="_blank"
                                   rel="noopener noreferrer"
                                   className="chat-link"
                                 />
                               ),
-                              code: ({node, inline, ...props}) => (
-                                inline 
-                                  ? <code className="inline-code" {...props} />
-                                  : <code className="block-code" {...props} />
-                              ),
+                              code: ({ node, inline, ...props }) =>
+                                inline ? (
+                                  <code className="inline-code" {...props} />
+                                ) : (
+                                  <code className="block-code" {...props} />
+                                ),
                             }}
                           >
                             {msg.content}
                           </ReactMarkdown>
                         </div>
-                        
+
                         {/* App Suggestions */}
                         {msg.suggestions && msg.suggestions.length > 0 && (
                           <div className="app-suggestions">
                             {msg.suggestions.map((app) => (
-                              <div 
+                              <div
                                 key={app.appId}
                                 className="suggestion-card"
                                 onClick={() => handleAppClick(app.appId)}
@@ -222,12 +227,12 @@ const ChatBot = () => {
                           </div>
                         )}
                       </div>
-                      {msg.role === 'user' && (
+                      {msg.role === "user" && (
                         <div className="message-avatar user">👤</div>
                       )}
                     </div>
                   ))}
-                  
+
                   {loading && (
                     <div className="message assistant">
                       <div className="message-avatar">МФ</div>
@@ -240,7 +245,7 @@ const ChatBot = () => {
                       </div>
                     </div>
                   )}
-                  
+
                   <div ref={messagesEndRef} />
                 </div>
 
@@ -255,7 +260,7 @@ const ChatBot = () => {
                     onKeyPress={handleKeyPress}
                     disabled={loading}
                   />
-                  <button 
+                  <button
                     className="chat-send-btn"
                     onClick={sendMessage}
                     disabled={!input.trim() || loading}

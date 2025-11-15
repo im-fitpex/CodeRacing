@@ -1,94 +1,78 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FiX, FiChevronLeft, FiChevronRight } from 'react-icons/fi';
-import { useSwipeable } from 'react-swipeable';
+import { FiChevronLeft, FiChevronRight, FiX } from 'react-icons/fi';
 import './Gallery.css';
 
-const Gallery = ({ images, initialIndex = 0, onClose }) => {
-  const [currentIndex, setCurrentIndex] = useState(initialIndex);
+const Gallery = ({ images, onClose }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
 
-  const handlers = useSwipeable({
-    onSwipedLeft: () => nextImage(),
-    onSwipedRight: () => prevImage(),
-    trackMouse: true,
-    preventScrollOnSwipe: true,
-  });
-
-  const nextImage = () => {
+  const nextSlide = () => {
     setCurrentIndex((prev) => (prev + 1) % images.length);
   };
 
-  const prevImage = () => {
+  const prevSlide = () => {
     setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
   };
 
   const handleKeyDown = (e) => {
+    if (e.key === 'ArrowRight') nextSlide();
+    if (e.key === 'ArrowLeft') prevSlide();
     if (e.key === 'Escape') onClose();
-    if (e.key === 'ArrowRight') nextImage();
-    if (e.key === 'ArrowLeft') prevImage();
   };
-
-  React.useEffect(() => {
-    document.addEventListener('keydown', handleKeyDown);
-    document.body.style.overflow = 'hidden';
-    
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = 'unset';
-    };
-  }, []);
 
   return (
     <motion.div
-      className="gallery-fullscreen"
+      className="gallery-overlay"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.3 }}
+      onClick={onClose}
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
     >
-      <div className="gallery-overlay" onClick={onClose} />
-
       <button className="gallery-close" onClick={onClose}>
         <FiX />
       </button>
 
-      <button className="gallery-nav gallery-prev" onClick={prevImage}>
-        <FiChevronLeft />
-      </button>
+      <div className="gallery-container" onClick={(e) => e.stopPropagation()}>
+        <button className="gallery-nav prev" onClick={prevSlide}>
+          <FiChevronLeft />
+        </button>
 
-      <button className="gallery-nav gallery-next" onClick={nextImage}>
-        <FiChevronRight />
-      </button>
-
-      <div className="gallery-content" {...handlers}>
         <AnimatePresence mode="wait">
-          <motion.img
+          <motion.div
             key={currentIndex}
-            src={images[currentIndex]}
-            alt={`Screenshot ${currentIndex + 1}`}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            transition={{ duration: 0.3 }}
-            className="gallery-image"
-          />
+            className="gallery-slide"
+            initial={{ opacity: 0, scale: 0.9, rotateY: -30 }}
+            animate={{ opacity: 1, scale: 1, rotateY: 0 }}
+            exit={{ opacity: 0, scale: 0.9, rotateY: 30 }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+          >
+            <img
+              src={images[currentIndex]}
+              alt={`Screenshot ${currentIndex + 1}`}
+              className="gallery-image"
+            />
+          </motion.div>
         </AnimatePresence>
+
+        <button className="gallery-nav next" onClick={nextSlide}>
+          <FiChevronRight />
+        </button>
+      </div>
+
+      <div className="gallery-indicators">
+        {images.map((_, idx) => (
+          <button
+            key={idx}
+            className={`gallery-dot ${idx === currentIndex ? 'active' : ''}`}
+            onClick={() => setCurrentIndex(idx)}
+          />
+        ))}
       </div>
 
       <div className="gallery-counter">
         {currentIndex + 1} / {images.length}
-      </div>
-
-      <div className="gallery-thumbnails">
-        {images.map((image, index) => (
-          <div
-            key={index}
-            className={`thumbnail ${index === currentIndex ? 'active' : ''}`}
-            onClick={() => setCurrentIndex(index)}
-          >
-            <img src={image} alt={`Thumbnail ${index + 1}`} />
-          </div>
-        ))}
       </div>
     </motion.div>
   );
