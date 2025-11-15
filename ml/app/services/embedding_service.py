@@ -74,8 +74,13 @@ class EmbeddingService:
         """
         texts = []
         for doc in documents:
+            # Safely get fields with defaults
+            name = doc.get('name', '')
+            developer = doc.get('developer', '')
+            description = doc.get('description', doc.get('shortDescription', ''))
+            
             # Combine multiple fields for better semantic understanding
-            text = f"{doc['name']}. {doc['developer']}. {doc['description']}"
+            text = f"{name}. {developer}. {description}"
             texts.append(text)
         
         return self.encode(texts, normalize=True)

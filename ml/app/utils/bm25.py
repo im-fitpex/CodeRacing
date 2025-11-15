@@ -27,8 +27,14 @@ class BM25Search:
         """Build BM25 index from documents"""
         corpus = []
         for doc in self.documents:
+            # Safely get fields with default values
+            name = doc.get('name', '')
+            developer = doc.get('developer', '')
+            description = doc.get('description', doc.get('shortDescription', ''))  # Fallback to shortDescription
+            category = doc.get('category', '')
+            
             # Combine searchable fields
-            text = f"{doc['name']} {doc['developer']} {doc['description']} {doc['category']}"
+            text = f"{name} {developer} {description} {category}"
             tokens = self._preprocess_text(text)
             corpus.append(tokens)
         

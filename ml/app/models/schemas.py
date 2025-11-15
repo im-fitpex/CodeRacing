@@ -4,15 +4,16 @@ from typing import List, Optional, Dict
 class AppDocument(BaseModel):
     id: int
     name: str
-    package_name: str
+    packageName: str  # Changed from package_name
     developer: str
     category: str
-    description: str
-    short_description: str
+    shortDescription: str  # Changed from short_description
+    description: Optional[str] = None  # Made optional
     rating: float
     downloads: int
-    is_free: bool
-    icon_url: str
+    isFree: bool  # Changed from is_free
+    iconUrl: str  # Changed from icon_url
+    ageRating: Optional[str] = None  # Made optional
 
 class SearchQuery(BaseModel):
     query: str = Field(..., min_length=1, max_length=200)
