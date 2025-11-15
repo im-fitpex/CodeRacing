@@ -1,0 +1,223 @@
+{
+  "nodes": [
+    {
+      "id": 7,
+      "name": "Яндекс Метро",
+      "category": "Транспорт",
+      "rating": 4.8,
+      "downloads": 25000000,
+      "icon_url": "/icons/yametro.png",
+      "is_free": true,
+      "is_installed": false,
+      "centrality": 0.3,
+      "group": "Транспорт"
+    },
+    {
+      "id": 2,
+      "name": "Тинькофф",
+      "category": "Финансы",
+      "rating": 4.7,
+      "downloads": 30000000,
+      "icon_url": "/icons/tinkoff.png",
+      "is_free": true,
+      "is_installed": true,
+      "centrality": 0.3,
+      "group": "Финансы"
+    },
+    {
+      "id": 15,
+      "name": "Учи.ру",
+      "category": "Образование",
+      "rating": 4.7,
+      "downloads": 12000000,
+      "icon_url": "/icons/uchiru.png",
+      "is_free": true,
+      "is_installed": false,
+      "centrality": 0.3,
+      "group": "Образование"
+    },
+    {
+      "id": 1,
+      "name": "Сбербанк Онлайн",
+      "category": "Финансы",
+      "rating": 4.6,
+      "downloads": 50000000,
+      "icon_url": "/icons/sberbank.png",
+      "is_free": true,
+      "is_installed": true,
+      "centrality": 0.3,
+      "group": "Финансы"
+    },
+    {
+      "id": 10,
+      "name": "Яндекс Диск",
+      "category": "Инструменты",
+      "rating": 4.6,
+      "downloads": 45000000,
+      "icon_url": "/icons/yadisk.png",
+      "is_free": true,
+      "is_installed": false,
+      "centrality": 0.3,
+      "group": "Инструменты"
+    },
+    {
+      "id": 6,
+      "name": "Яндекс Go",
+      "category": "Транспорт",
+      "rating": 4.5,
+      "downloads": 100000000,
+      "icon_url": "/icons/yandexgo.png",
+      "is_free": true,
+      "is_installed": true,
+      "centrality": 0.3,
+      "group": "Транспорт"
+    },
+    {
+      "id": 13,
+      "name": "Яндекс Музыка",
+      "category": "Музыка и аудио",
+      "rating": 4.5,
+      "downloads": 35000000,
+      "icon_url": "/icons/yamusic.png",
+      "is_free": false,
+      "is_installed": false,
+      "centrality": 0.3,
+      "group": "Музыка и аудио"
+    },
+    {
+      "id": 3,
+      "name": "ВТБ Онлайн",
+      "category": "Финансы",
+      "rating": 4.5,
+      "downloads": 15000000,
+      "icon_url": "/icons/vtb.png",
+      "is_free": true,
+      "is_installed": false,
+      "centrality": 0.3,
+      "group": "Финансы"
+    },
+    {
+      "id": 8,
+      "name": "ВКонтакте",
+      "category": "Социальные сети",
+      "rating": 4.4,
+      "downloads": 150000000,
+      "icon_url": "/icons/vk.png",
+      "is_free": true,
+      "is_installed": true,
+      "centrality": 0.0,
+      "group": "Социальные сети"
+    },
+    {
+      "id": 5,
+      "name": "Мой налог",
+      "category": "Государственные",
+      "rating": 4.4,
+      "downloads": 8000000,
+      "icon_url": "/icons/mynalg.png",
+      "is_free": true,
+      "is_installed": false,
+      "centrality": 0.1,
+      "group": "Государственные"
+    },
+    {
+      "id": 4,
+      "name": "Госуслуги",
+      "category": "Государственные",
+      "rating": 4.3,
+      "downloads": 40000000,
+      "icon_url": "/icons/gosuslugi.png",
+      "is_free": true,
+      "is_installed": true,
+      "centrality": 0.1,
+      "group": "Государственные"
+    }
+  ],
+  "links": [
+    {
+      "source": 7,
+      "target": 10,
+      "weight": 0.9771935939788818,
+      "similarity": 97.7
+    },
+    {
+      "source": 7,
+      "target": 13,
+      "weight": 0.902204692363739,
+      "similarity": 90.2
+    },
+    {
+      "source": 7,
+      "target": 6,
+      "weight": 0.8728179931640625,
+      "similarity": 87.3
+    },
+    {
+      "source": 2,
+      "target": 3,
+      "weight": 0.8840058445930481,
+      "similarity": 88.4
+    },
+    {
+      "source": 2,
+      "target": 1,
+      "weight": 0.7538881301879883,
+      "similarity": 75.4
+    },
+    {
+      "source": 2,
+      "target": 15,
+      "weight": 0.5161058902740479,
+      "similarity": 51.6
+    },
+    {
+      "source": 15,
+      "target": 1,
+      "weight": 0.5447368621826172,
+      "similarity": 54.5
+    },
+    {
+      "source": 15,
+      "target": 3,
+      "weight": 0.5347670316696167,
+      "similarity": 53.5
+    },
+    {
+      "source": 1,
+      "target": 3,
+      "weight": 0.8486707210540771,
+      "similarity": 84.9
+    },
+    {
+      "source": 10,
+      "target": 13,
+      "weight": 0.9013187885284424,
+      "similarity": 90.1
+    },
+    {
+      "source": 10,
+      "target": 6,
+      "weight": 0.886354386806488,
+      "similarity": 88.6
+    },
+    {
+      "source": 6,
+      "target": 13,
+      "weight": 0.8165953159332275,
+      "similarity": 81.7
+    },
+    {
+      "source": 5,
+      "target": 4,
+      "weight": 0.6272203922271729,
+      "similarity": 62.7
+    }
+  ],
+  "stats": {
+    "total_nodes": 11,
+    "total_edges": 13,
+    "installed_apps": 5,
+    "recommended_apps": 6
+  },
+  "processing_time_ms": 0.63
+}
