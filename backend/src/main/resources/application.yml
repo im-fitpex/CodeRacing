@@ -10,7 +10,7 @@ spring:
       client:
         registration:
           vk:
-            client-id: "O7lT60v8oIEc9wM6LYj2"
+            client-id: "54323602"
             client-secret: "3f75f9093f75f9093f75f9099a3c49109b33f753f75f909566d10e920f84f57dd9c5cd7"
             client-name: "VK"
             authorization-grant-type: authorization_code
