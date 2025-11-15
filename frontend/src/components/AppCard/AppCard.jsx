@@ -20,12 +20,19 @@ const AppCard = ({ app }) => {
       whileHover={{ y: -4, boxShadow: '0 8px 24px rgba(0, 102, 255, 0.15)' }}
       transition={{ duration: 0.2 }}
     >
+      {/* BADGES - Правый верхний угол */}
+      {(app.isEditorChoice || app.isNew || app.isPopular) && (
+        <div className="app-card-badges">
+          {app.isEditorChoice && (
+            <span className="badge badge-editor">⭐ Выбор редакции</span>
+          )}
+          {app.isNew && <span className="badge badge-new">🆕 Новинка</span>}
+          {app.isPopular && <span className="badge badge-popular">🔥 Популярное</span>}
+        </div>
+      )}
+
       <div className="app-card-icon">
         <img src={app.iconUrl} alt={app.name} />
-        {app.isEditorChoice && (
-          <span className="badge badge-editor">Выбор редакции</span>
-        )}
-        {app.isNew && <span className="badge badge-new">Новинка</span>}
       </div>
 
       <div className="app-card-content">
