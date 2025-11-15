@@ -6,6 +6,7 @@ import CategoryCard from '../../components/CategoryCard/CategoryCard';
 import SkeletonLoader from '../../components/SkeletonLoader/SkeletonLoader';
 import RecommendationWeb from '../../components/RecommendationWeb/RecommendationWeb';
 import { appsAPI, categoriesAPI } from '../../services/api';
+import { useAuth } from '../../contexts/AuthContext';
 import { FiTrendingUp, FiStar, FiClock, FiGrid } from 'react-icons/fi';
 import './Home.css';
 
@@ -15,9 +16,9 @@ const Home = () => {
   const [newApps, setNewApps] = useState([]);
   const [popularApps, setPopularApps] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [activeTab, setActiveTab] = useState('all');
   const [showWeb, setShowWeb] = useState(false);
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
 
   useEffect(() => {
     loadData();
@@ -79,7 +80,7 @@ const Home = () => {
             Откройте для себя мир российских приложений
           </motion.p>
           
-          {/* КНОПКА ПАУТИНЫ */}
+          {/* Кнопка паутины рекомендаций */}
           <motion.button
             className="btn-web-hero"
             onClick={() => setShowWeb(true)}
@@ -92,6 +93,22 @@ const Home = () => {
             <FiGrid className="btn-icon" />
             <span>🕸️ Показать паутину рекомендаций</span>
           </motion.button>
+
+          {/* Кнопка персональных рекомендаций (для авторизованных) */}
+          {isAuthenticated && (
+            <motion.button
+              className="btn-recommendations"
+              onClick={() => navigate('/recommendations')}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <FiStar className="btn-icon" />
+              <span>🎯 Персональные рекомендации</span>
+            </motion.button>
+          )}
         </div>
       </section>
 
@@ -197,10 +214,10 @@ const Home = () => {
         </motion.div>
       </section>
 
-      {/* МОДАЛЬНОЕ ОКНО С ПАУТИНОЙ */}
+      {/* Recommendation Web Modal */}
       {showWeb && (
         <RecommendationWeb
-          userId={1}
+          userId={user?.id || 1}
           onClose={() => setShowWeb(false)}
         />
       )}

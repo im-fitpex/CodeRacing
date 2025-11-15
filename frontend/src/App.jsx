@@ -1,46 +1,79 @@
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Header from './components/Header/Header';
 import Home from './pages/Home/Home';
-import Categories from './pages/Categories/Categories';
+import Login from './pages/Login/Login';
+import AuthCallback from './pages/AuthCallback/AuthCallback';
+import Recommendations from './pages/Recommendations/Recommendations';
+import VideoFeed from './pages/VideoFeed/VideoFeed';
+import RecommendationWeb from './components/RecommendationWeb/RecommendationWeb';
 import AppDetails from './pages/AppDetails/AppDetails';
-import Onboarding from './components/Onboarding/Onboarding';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import Categories from './pages/Categories/Categories';
+import Search from './pages/Search/Search';
 import './App.css';
 
+// Protected Route Component
+const ProtectedRoute = ({ children }) => {
+  const { isAuthenticated, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh' 
+      }}>
+        <div className="spinner-large"></div>
+      </div>
+    );
+  }
+
+  return isAuthenticated ? children : <Navigate to="/login" />;
+};
+
+function AppContent() {
+  return (
+    <div className="app">
+      <Header />
+      <Routes>
+        {/* Public Routes */}
+        <Route path="/" element={<Home />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="/app/:id" element={<AppDetails />} />
+        <Route path="/categories" element={<Categories />} />
+        <Route path="/search" element={<Search />} />
+        
+        {/* Protected Routes */}
+        <Route 
+          path="/recommendations" 
+          element={
+            <ProtectedRoute>
+              <Recommendations />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/video-feed" 
+          element={
+            <ProtectedRoute>
+              <VideoFeed />
+            </ProtectedRoute>
+          } 
+        />
+      </Routes>
+    </div>
+  );
+}
+
 function App() {
-  const [showOnboarding, setShowOnboarding] = useState(false);
-
-  useEffect(() => {
-    const hasSeenOnboarding = localStorage.getItem('hasSeenOnboarding');
-    if (!hasSeenOnboarding) {
-      setShowOnboarding(true);
-    }
-  }, []);
-
-  const handleOnboardingComplete = () => {
-    localStorage.setItem('hasSeenOnboarding', 'true');
-    setShowOnboarding(false);
-  };
-
   return (
     <Router>
-      {showOnboarding ? (
-        <Onboarding onComplete={handleOnboardingComplete} />
-      ) : (
-        <>
-          <Header />
-          <main>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/categories" element={<Categories />} />
-              <Route path="/app/:id" element={<AppDetails />} />
-            </Routes>
-          </main>
-          <ToastContainer position="bottom-right" autoClose={3000} />
-        </>
-      )}
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </Router>
   );
 }

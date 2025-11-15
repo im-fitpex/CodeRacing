@@ -16,6 +16,7 @@ from app.models.schemas import (
 )
 from app.services.hybrid_search import hybrid_search_service
 from app.services.recommendation_graph import recommendation_graph_service
+from app.services.recommendation_service import recommendation_service
 
 # Setup logging
 logging.basicConfig(
@@ -26,45 +27,6 @@ logger = logging.getLogger(__name__)
 
 settings = get_settings()
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Initialize services on startup"""
-    logger.info("Starting RuStore ML Search API")
-    
-    try:
-        # Fetch apps from backend
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.get(f"{settings.BACKEND_API_URL}/apps")
-            apps = response.json()
-        
-        logger.info(f"Fetched {len(apps)} apps from backend")
-        
-        # Initialize hybrid search
-        hybrid_search_service.initialize(apps)
-        logger.info("Hybrid search initialized")
-        
-        # Initialize recommendation graph
-        from app.services.embedding_service import embedding_service
-        embeddings = embedding_service.encode_documents(
-            hybrid_search_service.documents
-        )
-        recommendation_graph_service.initialize(
-            hybrid_search_service.documents,
-            embeddings
-        )
-        logger.info("Recommendation graph initialized")
-        
-        logger.info(f"✅ All services initialized with {len(apps)} apps")
-        
-    except Exception as e:
-        logger.error(f"❌ Startup error: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        raise
-    
-    yield
-    
-    logger.info("Shutting down")
 
 # Create FastAPI app
 app = FastAPI(
@@ -237,6 +199,109 @@ async def get_stats():
         "model": settings.EMBEDDING_MODEL,
         "embedding_dim": settings.EMBEDDING_DIM
     }
+
+@app.post("/recommendations/personalized", tags=["Recommendations"])
+async def get_personalized_recommendations(
+    user_id: int,
+    installed_apps: List[int] = [],
+    wishlist_apps: List[int] = [],
+    top_k: int = 20,
+    diversity_factor: float = 0.3
+):
+    """
+    Get personalized recommendations for user
+    
+    Uses hybrid approach:
+    - Content-based (similar to installed apps)
+    - Collaborative filtering (similar users)
+    - Trending/popularity
+    """
+    try:
+        logger.info(f"Getting personalized recommendations for user {user_id}")
+        
+        recommendations = recommendation_service.get_personalized_recommendations(
+            user_id=user_id,
+            installed_apps=installed_apps,
+            wishlist_apps=wishlist_apps,
+            user_interactions={},  # TODO: Load from database
+            top_k=top_k,
+            diversity_factor=diversity_factor
+        )
+        
+        return {
+            "user_id": user_id,
+            "recommendations": recommendations,
+            "total": len(recommendations)
+        }
+        
+    except Exception as e:
+        logger.error(f"Personalized recommendations error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/recommendations/similar/{app_id}", tags=["Recommendations"])
+async def get_similar_apps(app_id: int, top_k: int = 10):
+    """Get similar apps to given app"""
+    try:
+        similar_apps = recommendation_service.get_similar_apps(app_id, top_k)
+        return {
+            "app_id": app_id,
+            "similar_apps": similar_apps,
+            "total": len(similar_apps)
+        }
+    except Exception as e:
+        logger.error(f"Similar apps error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Initialize services on startup"""
+    logger.info("Starting RuStore ML Search API")
+    
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.get(f"{settings.BACKEND_API_URL}/apps")
+            apps = response.json()
+        
+        logger.info(f"Fetched {len(apps)} apps from backend")
+        
+        # Initialize hybrid search
+        hybrid_search_service.initialize(apps)
+        logger.info("Hybrid search initialized")
+        
+        # Generate embeddings
+        from app.services.embedding_service import embedding_service
+        embeddings = embedding_service.encode_documents(
+            hybrid_search_service.documents
+        )
+        
+        # Initialize recommendation graph
+        recommendation_graph_service.initialize(
+            hybrid_search_service.documents,
+            embeddings
+        )
+        logger.info("Recommendation graph initialized")
+        
+        # Initialize recommendation service (NEW)
+        recommendation_service.initialize(
+            hybrid_search_service.documents,
+            embeddings
+        )
+        logger.info("Recommendation service initialized")
+        
+        logger.info(f"✅ All services initialized with {len(apps)} apps")
+        
+    except Exception as e:
+        logger.error(f"❌ Startup error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise
+    
+    yield
+    
+    logger.info("Shutting down")
+
+
 
 if __name__ == "__main__":
     import uvicorn
