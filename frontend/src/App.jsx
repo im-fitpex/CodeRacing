@@ -1,13 +1,13 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Header from './components/Header/Header';
+import ChatBot from './components/ChatBot/ChatBot';
 import Home from './pages/Home/Home';
 import Login from './pages/Login/Login';
 import AuthCallback from './pages/AuthCallback/AuthCallback';
 import Recommendations from './pages/Recommendations/Recommendations';
 import VideoFeed from './pages/VideoFeed/VideoFeed';
-import RecommendationWeb from './components/RecommendationWeb/RecommendationWeb';
 import AppDetails from './pages/AppDetails/AppDetails';
 import Categories from './pages/Categories/Categories';
 import Search from './pages/Search/Search';
@@ -34,6 +34,11 @@ const ProtectedRoute = ({ children }) => {
 };
 
 function AppContent() {
+  const location = useLocation();
+  
+  // Hide chat on video feed page
+  const showChat = !location.pathname.includes('/video-feed');
+
   return (
     <div className="app">
       <Header />
@@ -64,6 +69,9 @@ function AppContent() {
           } 
         />
       </Routes>
+
+      {/* AI Chat Bot - показывается везде кроме видео */}
+      {showChat && <ChatBot />}
     </div>
   );
 }

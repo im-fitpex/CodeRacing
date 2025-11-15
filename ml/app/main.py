@@ -27,232 +27,13 @@ logger = logging.getLogger(__name__)
 
 settings = get_settings()
 
-
-# Create FastAPI app
-app = FastAPI(
-    title=settings.APP_NAME,
-    version=settings.VERSION,
-    lifespan=lifespan,
-    description="ML-powered search and recommendation API for RuStore"
-)
-
-# CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 # Pydantic models for requests
 class RecommendationWebRequest(BaseModel):
     installed_app_ids: List[int]
     max_depth: int = 2
     max_recommendations: int = 30
 
-@app.get("/", tags=["Root"])
-async def root():
-    """Root endpoint"""
-    return {
-        "app": settings.APP_NAME,
-        "version": settings.VERSION,
-        "status": "running",
-        "endpoints": {
-            "health": "/health",
-            "search": "/search",
-            "recommendation_web": "/recommendation-web",
-            "reindex": "/reindex"
-        }
-    }
-
-@app.get("/health", response_model=HealthResponse, tags=["Health"])
-async def health_check():
-    """Health check endpoint"""
-    return HealthResponse(
-        status="healthy",
-        model_loaded=True,
-        index_size=len(hybrid_search_service.documents),
-        version=settings.VERSION
-    )
-
-@app.post("/search", response_model=SearchResponse, tags=["Search"])
-async def search_apps(search_query: SearchQuery):
-    """
-    Hybrid search endpoint
-    
-    Combines semantic (vector) and keyword (BM25) search for relevant results
-    """
-    start_time = time.time()
-    
-    try:
-        logger.info(f"Search query: '{search_query.query}'")
-        
-        # Perform hybrid search
-        results = hybrid_search_service.search(search_query)
-        
-        search_time = (time.time() - start_time) * 1000
-        
-        logger.info(f"Found {len(results)} results in {search_time:.2f}ms")
-        
-        return SearchResponse(
-            query=search_query.query,
-            results=results,
-            total_results=len(results),
-            search_time_ms=round(search_time, 2),
-            metadata={
-                "semantic_weight": search_query.semantic_weight or settings.SEMANTIC_WEIGHT,
-                "keyword_weight": 1.0 - (search_query.semantic_weight or settings.SEMANTIC_WEIGHT),
-                "model": settings.EMBEDDING_MODEL,
-                "category_filter": search_query.category_filter,
-                "free_only": search_query.free_only
-            }
-        )
-        
-    except Exception as e:
-        logger.error(f"Search error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/recommendation-web", tags=["Recommendations"])
-async def get_recommendation_web(request: RecommendationWebRequest):
-    """
-    Generate recommendation web/graph for user's installed apps
-    
-    Returns graph data for interactive network visualization with:
-    - Nodes: apps (installed + recommended)
-    - Links: similarity connections
-    - Stats: graph metrics
-    """
-    try:
-        start_time = time.time()
-        
-        logger.info(f"Generating recommendation web for {len(request.installed_app_ids)} installed apps")
-        
-        graph_data = recommendation_graph_service.get_user_recommendation_web(
-            installed_app_ids=request.installed_app_ids,
-            max_depth=request.max_depth,
-            max_recommendations=request.max_recommendations
-        )
-        
-        processing_time = (time.time() - start_time) * 1000
-        logger.info(f"Generated web with {graph_data['stats']['total_nodes']} nodes in {processing_time:.2f}ms")
-        
-        # Add processing time to response
-        graph_data['processing_time_ms'] = round(processing_time, 2)
-        
-        return graph_data
-        
-    except Exception as e:
-        logger.error(f"Recommendation web error: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/reindex", tags=["Admin"])
-async def reindex(background_tasks: BackgroundTasks):
-    """
-    Reindex all apps (admin endpoint)
-    
-    Fetches latest data from backend and rebuilds all indices
-    """
-    async def do_reindex():
-        try:
-            logger.info("Starting reindexing...")
-            
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.get(f"{settings.BACKEND_API_URL}/apps")
-                apps = response.json()
-            
-            # Reinitialize hybrid search
-            hybrid_search_service.initialize(apps)
-            
-            # Reinitialize recommendation graph
-            from app.services.embedding_service import embedding_service
-            embeddings = embedding_service.encode_documents(
-                hybrid_search_service.documents
-            )
-            recommendation_graph_service.initialize(
-                hybrid_search_service.documents,
-                embeddings
-            )
-            
-            logger.info(f"✅ Reindexing completed: {len(apps)} apps")
-            
-        except Exception as e:
-            logger.error(f"❌ Reindexing error: {str(e)}")
-            import traceback
-            traceback.print_exc()
-    
-    background_tasks.add_task(do_reindex)
-    return {
-        "message": "Reindexing started in background",
-        "status": "processing"
-    }
-
-@app.get("/stats", tags=["Statistics"])
-async def get_stats():
-    """Get API statistics"""
-    return {
-        "total_apps": len(hybrid_search_service.documents),
-        "graph_nodes": recommendation_graph_service.graph.number_of_nodes() if recommendation_graph_service.graph else 0,
-        "graph_edges": recommendation_graph_service.graph.number_of_edges() if recommendation_graph_service.graph else 0,
-        "model": settings.EMBEDDING_MODEL,
-        "embedding_dim": settings.EMBEDDING_DIM
-    }
-
-@app.post("/recommendations/personalized", tags=["Recommendations"])
-async def get_personalized_recommendations(
-    user_id: int,
-    installed_apps: List[int] = [],
-    wishlist_apps: List[int] = [],
-    top_k: int = 20,
-    diversity_factor: float = 0.3
-):
-    """
-    Get personalized recommendations for user
-    
-    Uses hybrid approach:
-    - Content-based (similar to installed apps)
-    - Collaborative filtering (similar users)
-    - Trending/popularity
-    """
-    try:
-        logger.info(f"Getting personalized recommendations for user {user_id}")
-        
-        recommendations = recommendation_service.get_personalized_recommendations(
-            user_id=user_id,
-            installed_apps=installed_apps,
-            wishlist_apps=wishlist_apps,
-            user_interactions={},  # TODO: Load from database
-            top_k=top_k,
-            diversity_factor=diversity_factor
-        )
-        
-        return {
-            "user_id": user_id,
-            "recommendations": recommendations,
-            "total": len(recommendations)
-        }
-        
-    except Exception as e:
-        logger.error(f"Personalized recommendations error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/recommendations/similar/{app_id}", tags=["Recommendations"])
-async def get_similar_apps(app_id: int, top_k: int = 10):
-    """Get similar apps to given app"""
-    try:
-        similar_apps = recommendation_service.get_similar_apps(app_id, top_k)
-        return {
-            "app_id": app_id,
-            "similar_apps": similar_apps,
-            "total": len(similar_apps)
-        }
-    except Exception as e:
-        logger.error(f"Similar apps error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-
-
+# DEFINE LIFESPAN FIRST (BEFORE APP CREATION)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Initialize services on startup"""
@@ -282,7 +63,7 @@ async def lifespan(app: FastAPI):
         )
         logger.info("Recommendation graph initialized")
         
-        # Initialize recommendation service (NEW)
+        # Initialize recommendation service
         recommendation_service.initialize(
             hybrid_search_service.documents,
             embeddings
@@ -301,13 +82,181 @@ async def lifespan(app: FastAPI):
     
     logger.info("Shutting down")
 
+# NOW CREATE APP (AFTER LIFESPAN IS DEFINED)
+app = FastAPI(
+    title=settings.APP_NAME,
+    version=settings.VERSION,
+    lifespan=lifespan,
+    description="ML-powered search and recommendation API for RuStore"
+)
 
+# CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.get("/", tags=["Root"])
+async def root():
+    """Root endpoint"""
+    return {
+        "app": settings.APP_NAME,
+        "version": settings.VERSION,
+        "status": "running",
+        "endpoints": {
+            "health": "/health",
+            "search": "/search",
+            "recommendation_web": "/recommendation-web",
+            "reindex": "/reindex"
+        }
+    }
+
+@app.get("/health", response_model=HealthResponse, tags=["Health"])
+async def health_check():
+    """Health check endpoint"""
+    return HealthResponse(
+        status="healthy",
+        model_loaded=True,
+        index_size=len(hybrid_search_service.documents),
+        version=settings.VERSION
+    )
+
+@app.post("/search", response_model=SearchResponse, tags=["Search"])
+async def search_apps(search_query: SearchQuery):
+    """Hybrid search endpoint"""
+    start_time = time.time()
+    
+    try:
+        logger.info(f"Search query: '{search_query.query}'")
+        results = hybrid_search_service.search(search_query)
+        search_time = (time.time() - start_time) * 1000
+        logger.info(f"Found {len(results)} results in {search_time:.2f}ms")
+        
+        return SearchResponse(
+            query=search_query.query,
+            results=results,
+            total_results=len(results),
+            search_time_ms=round(search_time, 2),
+            metadata={
+                "semantic_weight": search_query.semantic_weight or settings.SEMANTIC_WEIGHT,
+                "keyword_weight": 1.0 - (search_query.semantic_weight or settings.SEMANTIC_WEIGHT),
+                "model": settings.EMBEDDING_MODEL,
+                "category_filter": search_query.category_filter,
+                "free_only": search_query.free_only
+            }
+        )
+    except Exception as e:
+        logger.error(f"Search error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/recommendation-web", tags=["Recommendations"])
+async def get_recommendation_web(request: RecommendationWebRequest):
+    """Generate recommendation web/graph"""
+    try:
+        start_time = time.time()
+        logger.info(f"Generating recommendation web for {len(request.installed_app_ids)} installed apps")
+        
+        graph_data = recommendation_graph_service.get_user_recommendation_web(
+            installed_app_ids=request.installed_app_ids,
+            max_depth=request.max_depth,
+            max_recommendations=request.max_recommendations
+        )
+        
+        processing_time = (time.time() - start_time) * 1000
+        logger.info(f"Generated web with {graph_data['stats']['total_nodes']} nodes in {processing_time:.2f}ms")
+        graph_data['processing_time_ms'] = round(processing_time, 2)
+        
+        return graph_data
+    except Exception as e:
+        logger.error(f"Recommendation web error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/recommendations/personalized", tags=["Recommendations"])
+async def get_personalized_recommendations(
+    user_id: int,
+    installed_apps: List[int] = [],
+    wishlist_apps: List[int] = [],
+    top_k: int = 20,
+    diversity_factor: float = 0.3
+):
+    """Get personalized recommendations for user"""
+    try:
+        logger.info(f"Getting personalized recommendations for user {user_id}")
+        
+        recommendations = recommendation_service.get_personalized_recommendations(
+            user_id=user_id,
+            installed_apps=installed_apps,
+            wishlist_apps=wishlist_apps,
+            user_interactions={},
+            top_k=top_k,
+            diversity_factor=diversity_factor
+        )
+        
+        return {
+            "user_id": user_id,
+            "recommendations": recommendations,
+            "total": len(recommendations)
+        }
+    except Exception as e:
+        logger.error(f"Personalized recommendations error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/recommendations/similar/{app_id}", tags=["Recommendations"])
+async def get_similar_apps(app_id: int, top_k: int = 10):
+    """Get similar apps to given app"""
+    try:
+        similar_apps = recommendation_service.get_similar_apps(app_id, top_k)
+        return {
+            "app_id": app_id,
+            "similar_apps": similar_apps,
+            "total": len(similar_apps)
+        }
+    except Exception as e:
+        logger.error(f"Similar apps error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/reindex", tags=["Admin"])
+async def reindex(background_tasks: BackgroundTasks):
+    """Reindex all apps (admin endpoint)"""
+    async def do_reindex():
+        try:
+            logger.info("Starting reindexing...")
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.get(f"{settings.BACKEND_API_URL}/apps")
+                apps = response.json()
+            
+            hybrid_search_service.initialize(apps)
+            
+            from app.services.embedding_service import embedding_service
+            embeddings = embedding_service.encode_documents(hybrid_search_service.documents)
+            recommendation_graph_service.initialize(hybrid_search_service.documents, embeddings)
+            recommendation_service.initialize(hybrid_search_service.documents, embeddings)
+            
+            logger.info(f"✅ Reindexing completed: {len(apps)} apps")
+        except Exception as e:
+            logger.error(f"❌ Reindexing error: {str(e)}")
+            import traceback
+            traceback.print_exc()
+    
+    background_tasks.add_task(do_reindex)
+    return {"message": "Reindexing started in background", "status": "processing"}
+
+@app.get("/stats", tags=["Statistics"])
+async def get_stats():
+    """Get API statistics"""
+    return {
+        "total_apps": len(hybrid_search_service.documents),
+        "graph_nodes": recommendation_graph_service.graph.number_of_nodes() if recommendation_graph_service.graph else 0,
+        "graph_edges": recommendation_graph_service.graph.number_of_edges() if recommendation_graph_service.graph else 0,
+        "model": settings.EMBEDDING_MODEL,
+        "embedding_dim": settings.EMBEDDING_DIM
+    }
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(
-        app,
-        host="0.0.0.0",
-        port=8000,
-        log_level="info"
-    )
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")

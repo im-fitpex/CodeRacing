@@ -56,3 +56,8 @@ management:
   endpoint:
     health:
       show-details: always
+
+openrouter:
+  api-key: ${OPENROUTER_API_KEY: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}
+  api-url: https://openrouter.ai/api/v1/chat/completions
+  model: deepseek/deepseek-chat
