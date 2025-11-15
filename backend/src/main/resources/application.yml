@@ -1,6 +1,10 @@
 spring:
   application:
     name: rustore-backend
+  security:
+    user:
+      name: admin
+      password: admin123
 
   datasource:
     url: jdbc:clickhouse://localhost:8123/rustore
@@ -31,6 +35,12 @@ clickhouse:
   max-execution-time: 300
   async-insert: true
   wait-for-async-insert: true
+
+  # VK ID Configuration
+vk:
+  client-id: ${VK_CLIENT_ID}
+  client-secret: ${VK_CLIENT_SECRET}
+  redirect-uri: ${VK_REDIRECT_URI:http://localhost:3000/auth/vk/callback}
 
 logging:
   level:
