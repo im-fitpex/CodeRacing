@@ -14,6 +14,7 @@
 }
 
 .hero-content h1 {
+  color: #FFFFFF;
   font-size: 3rem;
   font-weight: 800;
   margin-bottom: 1rem;
@@ -21,7 +22,7 @@
 }
 
 .gradient-text {
-  background: linear-gradient(90deg, #FFD700, #FFA500);
+  background: linear-gradient(90deg, #ffffff, #ffffff);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -32,6 +33,64 @@
   opacity: 0.95;
   max-width: 600px;
   margin: 0 auto;
+}
+
+/* СТИЛИ ДЛЯ КНОПКИ ПАУТИНЫ */
+.btn-web-hero {
+  margin-top: 2rem;
+  padding: 1rem 2.5rem;
+  background: linear-gradient(135deg, #8B5CF6, #EC4899);
+  color: white;
+  border: none;
+  border-radius: 16px;
+  font-size: 1.125rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.4);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-web-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s;
+}
+
+.btn-web-hero:hover::before {
+  left: 100%;
+}
+
+.btn-web-hero:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(139, 92, 246, 0.5);
+}
+
+.btn-web-hero:active {
+  transform: translateY(-2px);
+}
+
+.btn-icon {
+  font-size: 1.5rem;
+  animation: rotate 3s linear infinite;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .section {
@@ -95,6 +154,7 @@
 @media (max-width: 768px) {
   .hero-content h1 {
     font-size: 2rem;
+    color: white;
   }
 
   .hero-content p {
@@ -112,6 +172,10 @@
 }
 
 @media (max-width: 480px) {
+  .hero-content h1 {
+    color: white;
+  }
+
   .hero {
     padding: 2rem 1rem;
   }

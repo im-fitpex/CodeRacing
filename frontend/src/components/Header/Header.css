@@ -61,10 +61,28 @@
   letter-spacing: -0.5px;
 }
 
+.header-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;  /* NEW */
+}
+
 .nav-menu {
   display: flex;
   gap: 2rem;
   align-items: center;
+  position: absolute;  /* NEW */
+  left: 50%;           /* NEW */
+  transform: translateX(-50%);  /* NEW: точный центр */
+}
+
+.header-left,
+.header-right {
+  z-index: 1;  /* NEW: поверх nav-menu */
 }
 
 .nav-link {
