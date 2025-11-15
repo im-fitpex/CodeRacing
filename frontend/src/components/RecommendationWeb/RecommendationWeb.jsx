@@ -13,6 +13,10 @@ const RecommendationWeb = ({ userId, onClose }) => {
     width: window.innerWidth * 0.9,
     height: window.innerHeight * 0.85,
   });
+  const [hoveredNode, setHoveredNode] = useState(null);
+
+  // Preload images
+  const imageCache = useRef({});
 
   useEffect(() => {
     loadRecommendationWeb();
@@ -28,13 +32,33 @@ const RecommendationWeb = ({ userId, onClose }) => {
     return () => window.removeEventListener('resize', handleResize);
   }, [userId]);
 
+  useEffect(() => {
+    // Принудительно устанавливаем длину связей после инициализации
+    if (graphRef.current && graphData.nodes.length > 0) {
+      const fg = graphRef.current;
+      
+      fg.d3Force('link')
+        .distance((link) => {
+          const sim = link.similarity || 50;
+          if (sim > 90) return 400;    // Похожие приложения - средняя длина
+          if (sim > 70) return 600;    // Менее похожие - больше длина
+          return 1200;                 // РАЗНЫЕ ПАУТИНЫ - ОЧЕНЬ БОЛЬШОЕ расстояние!
+        })
+        .strength(0.5);
+      
+      fg.d3Force('charge')
+        .strength(-400)
+        .distanceMax(1000);
+        
+      fg.d3ReheatSimulation();
+    }
+  }, [graphData]);
+
   const loadRecommendationWeb = async () => {
     setLoading(true);
     try {
-      // Get user's installed apps
       const installedApps = JSON.parse(localStorage.getItem('installedApps') || '[]');
       
-      // Fetch recommendation graph
       const response = await fetch('http://localhost:8000/recommendation-web', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -46,6 +70,16 @@ const RecommendationWeb = ({ userId, onClose }) => {
       });
       
       const data = await response.json();
+      
+      // Preload all images
+      data.nodes.forEach(node => {
+        const img = new Image();
+        img.src = node.icon_url;
+        img.onload = () => {
+          imageCache.current[node.id] = img;
+        };
+      });
+      
       setGraphData(data);
     } catch (error) {
       console.error('Error loading recommendation web:', error);
@@ -56,11 +90,9 @@ const RecommendationWeb = ({ userId, onClose }) => {
 
   const handleNodeClick = (node) => {
     setSelectedNode(node);
-    
-    // Center on node
     if (graphRef.current) {
       graphRef.current.centerAt(node.x, node.y, 1000);
-      graphRef.current.zoom(3, 1000);
+      graphRef.current.zoom(2.5, 1000);
     }
   };
 
@@ -78,11 +110,10 @@ const RecommendationWeb = ({ userId, onClose }) => {
 
   const handleFitView = () => {
     if (graphRef.current) {
-      graphRef.current.zoomToFit(500, 50);
+      graphRef.current.zoomToFit(500, 200);
     }
   };
 
-  // Category color mapping
   const getCategoryColor = (category) => {
     const colors = {
       'Финансы': '#10B981',
@@ -101,11 +132,10 @@ const RecommendationWeb = ({ userId, onClose }) => {
   return (
     <div className="recommendation-web-overlay">
       <div className="web-container">
-        {/* Header */}
         <div className="web-header">
           <div className="web-title">
             <h2>🕸️ Паутина рекомендаций</h2>
-            <p>Откройте для себя похожие приложения</p>
+            <p>Наведите на приложение для просмотра информации</p>
           </div>
           
           <div className="web-controls">
@@ -124,7 +154,6 @@ const RecommendationWeb = ({ userId, onClose }) => {
           </div>
         </div>
 
-        {/* Legend */}
         <div className="web-legend">
           <div className="legend-item">
             <div className="legend-dot installed"></div>
@@ -136,7 +165,6 @@ const RecommendationWeb = ({ userId, onClose }) => {
           </div>
         </div>
 
-        {/* Graph */}
         {loading ? (
           <div className="web-loading">
             <div className="spinner-large"></div>
@@ -148,59 +176,155 @@ const RecommendationWeb = ({ userId, onClose }) => {
             graphData={graphData}
             width={dimensions.width}
             height={dimensions.height}
-            nodeLabel={(node) => `
-              <div class="graph-tooltip">
-                <img src="${node.icon_url}" alt="${node.name}" />
-                <div>
-                  <strong>${node.name}</strong><br/>
-                  ${node.category}<br/>
-                  ⭐ ${node.rating.toFixed(1)} • ${node.downloads.toLocaleString()} загрузок
-                </div>
-              </div>
-            `}
+            backgroundColor="#1F2937"
+            
+            warmupTicks={100}
+            cooldownTicks={200}
+            
+            d3VelocityDecay={0.3}
+            d3AlphaDecay={0.01}
+            nodeRelSize={10}
+            
+            // ДЛИНА ВЕТОК - УВЕЛИЧЕНА В 3-4 РАЗА!
+            linkDistance={(link) => {
+              const sim = link.similarity || 50;
+              if (sim > 90) return 400;   // было ~120
+              if (sim > 70) return 600;   // было ~200
+              return 900;                 // было ~350
+            }}
+            
+            nodeVal={(node) => node.is_installed ? 60 : 50}
+            
             nodeCanvasObject={(node, ctx, globalScale) => {
-              const size = node.is_installed ? 12 : 8;
-              const color = node.is_installed
-                ? '#0066FF'
-                : getCategoryColor(node.category);
+              const nodeSize = node.is_installed ? 40 : 32;
+              const img = imageCache.current[node.id];
               
-              // Draw node circle
-              ctx.beginPath();
-              ctx.arc(node.x, node.y, size, 0, 2 * Math.PI);
-              ctx.fillStyle = color;
-              ctx.fill();
-              
-              // Draw border for installed apps
-              if (node.is_installed) {
-                ctx.strokeStyle = '#FFD700';
-                ctx.lineWidth = 2;
+              // Draw icon image
+              if (img && img.complete) {
+                ctx.save();
+                
+                // Clip to circle
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, nodeSize / 2, 0, 2 * Math.PI);
+                ctx.clip();
+                
+                // Draw image
+                ctx.drawImage(
+                  img,
+                  node.x - nodeSize / 2,
+                  node.y - nodeSize / 2,
+                  nodeSize,
+                  nodeSize
+                );
+                
+                ctx.restore();
+                
+                // Border for installed apps
+                if (node.is_installed) {
+                  ctx.beginPath();
+                  ctx.arc(node.x, node.y, nodeSize / 2, 0, 2 * Math.PI);
+                  ctx.strokeStyle = '#FFD700';
+                  ctx.lineWidth = 4;
+                  ctx.stroke();
+                }
+                
+                // Ring around icon
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, nodeSize / 2, 0, 2 * Math.PI);
+                ctx.strokeStyle = node.is_installed 
+                  ? '#0066FF' 
+                  : getCategoryColor(node.category);
+                ctx.lineWidth = 3;
                 ctx.stroke();
+              } else {
+                // Fallback: colored circle
+                const color = node.is_installed ? '#0066FF' : getCategoryColor(node.category);
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, nodeSize / 2, 0, 2 * Math.PI);
+                ctx.fillStyle = color;
+                ctx.fill();
+                
+                if (node.is_installed) {
+                  ctx.strokeStyle = '#FFD700';
+                  ctx.lineWidth = 3;
+                  ctx.stroke();
+                }
               }
               
-              // Draw label
-              if (globalScale > 1.5) {
-                ctx.font = `${10 / globalScale}px Sans-Serif`;
+              // TEXT - только при наведении или установленные
+              if (hoveredNode === node.id || node.is_installed || globalScale > 1.5) {
+                const label = node.name;
+                const fontSize = 13;
+                ctx.font = `bold ${fontSize}px Arial`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillStyle = '#1F2937';
-                ctx.fillText(node.name, node.x, node.y + size + 8);
+                
+                const textWidth = ctx.measureText(label).width;
+                const padding = 6;
+                const textX = node.x;
+                const textY = node.y + nodeSize / 2 + 25;
+                
+                // Background with rounded corners
+                const rectHeight = fontSize + padding * 2;
+                const rectWidth = textWidth + padding * 2;
+                const cornerRadius = 8;
+                
+                ctx.fillStyle = 'rgba(31, 41, 55, 0.95)';
+                ctx.beginPath();
+                ctx.moveTo(textX - rectWidth / 2 + cornerRadius, textY - rectHeight / 2);
+                ctx.lineTo(textX + rectWidth / 2 - cornerRadius, textY - rectHeight / 2);
+                ctx.quadraticCurveTo(textX + rectWidth / 2, textY - rectHeight / 2, textX + rectWidth / 2, textY - rectHeight / 2 + cornerRadius);
+                ctx.lineTo(textX + rectWidth / 2, textY + rectHeight / 2 - cornerRadius);
+                ctx.quadraticCurveTo(textX + rectWidth / 2, textY + rectHeight / 2, textX + rectWidth / 2 - cornerRadius, textY + rectHeight / 2);
+                ctx.lineTo(textX - rectWidth / 2 + cornerRadius, textY + rectHeight / 2);
+                ctx.quadraticCurveTo(textX - rectWidth / 2, textY + rectHeight / 2, textX - rectWidth / 2, textY + rectHeight / 2 - cornerRadius);
+                ctx.lineTo(textX - rectWidth / 2, textY - rectHeight / 2 + cornerRadius);
+                ctx.quadraticCurveTo(textX - rectWidth / 2, textY - rectHeight / 2, textX - rectWidth / 2 + cornerRadius, textY - rectHeight / 2);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Border
+                ctx.strokeStyle = getCategoryColor(node.category);
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Text
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillText(label, textX, textY);
               }
             }}
-            linkColor={(link) => {
-              const opacity = link.similarity / 100;
-              return `rgba(107, 114, 128, ${opacity})`;
+            
+            nodePointerAreaPaint={(node, color, ctx) => {
+              const nodeSize = node.is_installed ? 40 : 32;
+              ctx.fillStyle = color;
+              ctx.beginPath();
+              ctx.arc(node.x, node.y, nodeSize / 2 + 5, 0, 2 * Math.PI);
+              ctx.fill();
             }}
-            linkWidth={(link) => link.similarity / 25}
-            linkDirectionalParticles={2}
-            linkDirectionalParticleWidth={2}
-            linkDirectionalParticleSpeed={0.005}
+            
+            onNodeHover={(node) => {
+              setHoveredNode(node?.id || null);
+            }}
+            
+            linkColor={(link) => {
+              const opacity = link.similarity / 150;
+              return `rgba(139, 92, 246, ${opacity})`;
+            }}
+            linkWidth={(link) => Math.max(1, link.similarity / 35)}
+            linkDirectionalParticles={3}
+            linkDirectionalParticleWidth={3}
+            linkDirectionalParticleSpeed={0.006}
+            
             onNodeClick={handleNodeClick}
-            cooldownTicks={100}
-            onEngineStop={() => graphRef.current && graphRef.current.zoomToFit(400, 50)}
+            
+            onEngineStop={() => {
+              if (graphRef.current) {
+                graphRef.current.zoomToFit(500, 200);
+              }
+            }}
           />
         )}
 
-        {/* Selected Node Info */}
         <AnimatePresence>
           {selectedNode && (
             <motion.div
@@ -209,18 +333,11 @@ const RecommendationWeb = ({ userId, onClose }) => {
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: 300, opacity: 0 }}
             >
-              <button
-                className="close-panel-btn"
-                onClick={() => setSelectedNode(null)}
-              >
+              <button className="close-panel-btn" onClick={() => setSelectedNode(null)}>
                 <FiX />
               </button>
               
-              <img
-                src={selectedNode.icon_url}
-                alt={selectedNode.name}
-                className="node-icon"
-              />
+              <img src={selectedNode.icon_url} alt={selectedNode.name} className="node-icon" />
               
               <h3>{selectedNode.name}</h3>
               <p className="node-category">{selectedNode.category}</p>
@@ -250,7 +367,6 @@ const RecommendationWeb = ({ userId, onClose }) => {
           )}
         </AnimatePresence>
 
-        {/* Stats */}
         <div className="web-stats">
           <div className="stat-item">
             <strong>{graphData.stats?.total_nodes || 0}</strong>
