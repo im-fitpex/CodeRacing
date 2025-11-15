@@ -40,4 +40,17 @@ export const reviewsAPI = {
   like: (reviewId) => api.post(`/reviews/${reviewId}/helpful`),
 };
 
+// ML Search API
+export const mlSearchAPI = {
+  search: (query, filters = {}) => 
+    axios.post('http://localhost:8000/search', {
+      query,
+      top_k: filters.limit || 10,
+      semantic_weight: filters.semanticWeight || 0.6,
+      category_filter: filters.category,
+      free_only: filters.freeOnly,
+    }),
+};
+
+
 export default api;
