@@ -6,6 +6,23 @@ spring:
       name: admin
       password: admin123
 
+    oauth2:
+      client:
+        registration:
+          vk:
+            client-id: "54323602"
+            client-secret: "3f75f9093f75f9093f75f9099a3c49109b33f753f75f909566d10e920f84f57dd9c5cd7"
+            client-name: "VK"
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/vk"
+            scope: email
+        provider:
+          vk:
+            authorization-uri: https://oauth.vk.com/authorize
+            token-uri: https://oauth.vk.com/access_token
+            user-info-uri: https://api.vk.com/method/users.get?fields=email&v=5.199  # ← добавил &v=5.199
+            user-name-attribute: response[0].id
+
   datasource:
     url: jdbc:clickhouse://localhost:8123/rustore
     username: "default"
@@ -23,12 +40,6 @@ spring:
     caffeine:
       spec: maximumSize=1000,expireAfterWrite=1h
 
-server:
-  port: 8080
-  compression:
-    enabled: true
-    mime-types: application/json,application/xml,text/html,text/xml,text/plain
-
 clickhouse:
   socket-timeout: 30000
   connection-timeout: 10000
@@ -36,11 +47,11 @@ clickhouse:
   async-insert: true
   wait-for-async-insert: true
 
-  # VK ID Configuration
-vk:
-  client-id: ${VK_CLIENT_ID}
-  client-secret: ${VK_CLIENT_SECRET}
-  redirect-uri: ${VK_REDIRECT_URI:http://localhost:3000/auth/vk/callback}
+server:
+  port: 8080
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/xml,text/plain
 
 logging:
   level:
