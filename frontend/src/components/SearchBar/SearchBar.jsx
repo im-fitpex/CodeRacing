@@ -23,10 +23,21 @@ const SearchBar = ({ onClose }) => {
   const searchApps = async (searchQuery) => {
     setLoading(true);
     try {
-      const response = await appsAPI.search(searchQuery);
-      setResults(response.data);
+      const response = await fetch('http://127.0.0.1:8000/search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: searchQuery,
+          top_k: 10,
+        }),
+      });
+      const data = await response.json();
+      setResults(data.results || []);
     } catch (error) {
       console.error('Search error:', error);
+      setResults([]);
     } finally {
       setLoading(false);
     }
@@ -72,11 +83,11 @@ const SearchBar = ({ onClose }) => {
         <div className="search-results">
           {results.map((app) => (
             <div
-              key={app.id}
+              key={app.app_id}
               className="search-result-item"
-              onClick={() => handleAppClick(app.id)}
+              onClick={() => handleAppClick(app.app_id)}
             >
-              <img src={app.iconUrl} alt={app.name} className="result-icon" />
+              <img src={app.icon_url} alt={app.name} className="result-icon" />
               <div className="result-info">
                 <h4>{app.name}</h4>
                 <p>{app.developer}</p>

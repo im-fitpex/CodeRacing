@@ -34,16 +34,12 @@ const Header = () => {
           <Link to="/categories" className="nav-link" onClick={() => setShowMenu(false)}>
             Категории
           </Link>
-          {isAuthenticated && (
-            <>
-              <Link to="/recommendations" className="nav-link" onClick={() => setShowMenu(false)}>
-                🎯 Рекомендации
-              </Link>
-              <Link to="/video-feed" className="nav-link" onClick={() => setShowMenu(false)}>
-                🎬 Видео
-              </Link>
-            </>
-          )}
+          <Link to="/recommendations" className="nav-link" onClick={() => setShowMenu(false)}>
+            🎯 Рекомендации
+          </Link>
+          <Link to="/video-feed" className="nav-link" onClick={() => setShowMenu(false)}>
+            🎬 Видео
+          </Link>
         </nav>
 
         <div className="header-right">

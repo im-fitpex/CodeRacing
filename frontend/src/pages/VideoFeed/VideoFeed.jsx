@@ -24,6 +24,8 @@ const VideoFeed = () => {
 
     const videoRefs = useRef([]);
     const demoTimerRef = useRef(null);
+    const touchStartRef = useRef(null);
+    const touchStartTimeRef = useRef(null);
     const navigate = useNavigate();
     const userId = 1; // TODO: Get from auth
 
@@ -55,12 +57,41 @@ const VideoFeed = () => {
             if (e.key === ' ') togglePlayPause();
         };
 
+        const handleTouchStart = (e) => {
+            touchStartRef.current = e.touches[0].clientY;
+            touchStartTimeRef.current = Date.now();
+        };
+
+        const handleTouchEnd = (e) => {
+            if (!touchStartRef.current || !touchStartTimeRef.current) return;
+
+            const touchEndY = e.changedTouches[0].clientY;
+            const touchDuration = Date.now() - touchStartTimeRef.current;
+            const swipeDistance = touchStartRef.current - touchEndY;
+
+            // Only register swipes longer than 30px and faster than 300ms
+            if (Math.abs(swipeDistance) > 30 && touchDuration < 500) {
+                if (swipeDistance > 0) {
+                    scrollToNext(); // Swipe up
+                } else {
+                    scrollToPrev(); // Swipe down
+                }
+            }
+
+            touchStartRef.current = null;
+            touchStartTimeRef.current = null;
+        };
+
         window.addEventListener('wheel', handleWheel);
         window.addEventListener('keydown', handleKeyDown);
+        window.addEventListener('touchstart', handleTouchStart, false);
+        window.addEventListener('touchend', handleTouchEnd, false);
 
         return () => {
             window.removeEventListener('wheel', handleWheel);
             window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('touchstart', handleTouchStart);
+            window.removeEventListener('touchend', handleTouchEnd);
         };
     }, [currentIndex, showDemo]);
 
@@ -70,9 +101,14 @@ const VideoFeed = () => {
                 `http://localhost:8080/api/video-feed?userId=${userId}&limit=20`
             );
             const data = await response.json();
-            setVideos(data);
+            // Handle both array and object responses
+            const videoArray = Array.isArray(data) ? data : (data.data || data.videos || []);
+            console.log('Videos loaded:', videoArray.length);
+            console.log('Video data:', videoArray);
+            setVideos(videoArray);
         } catch (error) {
             console.error('Error loading videos:', error);
+            setVideos([]);
         } finally {
             setLoading(false);
         }
@@ -106,13 +142,21 @@ const VideoFeed = () => {
 
     const scrollToNext = () => {
         if (currentIndex < videos.length - 1) {
-            setCurrentIndex(currentIndex + 1);
+            const nextIndex = currentIndex + 1;
+            console.log(`Moving to next video: ${nextIndex} / ${videos.length}`);
+            setCurrentIndex(nextIndex);
+        } else {
+            console.log('Already at last video');
         }
     };
 
     const scrollToPrev = () => {
         if (currentIndex > 0) {
-            setCurrentIndex(currentIndex - 1);
+            const prevIndex = currentIndex - 1;
+            console.log(`Moving to previous video: ${prevIndex} / ${videos.length}`);
+            setCurrentIndex(prevIndex);
+        } else {
+            console.log('Already at first video');
         }
     };
 
@@ -277,6 +321,25 @@ const VideoFeed = () => {
 
     const currentVideo = videos[currentIndex];
 
+    if (loading) {
+        return (
+            <div className="video-feed-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div className="spinner-large"></div>
+            </div>
+        );
+    }
+
+    if (!videos || videos.length === 0) {
+        return (
+            <div className="video-feed-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ textAlign: 'center', color: '#6B7280' }}>
+                    <h2>Видео не найдены</h2>
+                    <p>Попробуйте позже или посетите другие разделы</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="video-feed-container">
             {/* Video Player */}
@@ -290,8 +353,8 @@ const VideoFeed = () => {
                         <video
                             ref={(el) => (videoRefs.current[index] = el)}
                             className="video-player"
-                            src={video.videoUrl}
-                            poster={video.thumbnailUrl}
+                            src={`http://localhost:8080${video.videoUrl}`}
+                            poster={video.thumbnailUrl ? `http://localhost:8080${video.thumbnailUrl}` : undefined}
                             loop
                             playsInline
                             onClick={togglePlayPause}

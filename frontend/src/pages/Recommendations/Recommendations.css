@@ -1,6 +1,6 @@
 .recommendations-page {
   padding: 2rem;
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
 }
 
@@ -14,7 +14,7 @@
 }
 
 .recommendations-header h1 {
-  font-size: 2rem;
+  font-size: 2.5rem;
   font-weight: 700;
   margin: 0 0 0.5rem 0;
   color: #1F2937;
@@ -23,48 +23,58 @@
 .recommendations-header p {
   color: #6B7280;
   margin: 0;
+  font-size: 1.125rem;
 }
 
 .recommendations-controls {
   display: flex;
   gap: 1rem;
   align-items: center;
+  flex-wrap: wrap;
 }
 
-.diversity-control {
+.filter-tabs {
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1.25rem;
-  background: white;
-  border: 1px solid #E5E7EB;
-  border-radius: 12px;
-}
-
-.diversity-control label {
-  display: flex;
-  flex-direction: column;
   gap: 0.5rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: #4B5563;
+  background: white;
+  padding: 0.5rem;
+  border-radius: 12px;
+  border: 1px solid #E5E7EB;
 }
 
-.diversity-control input[type="range"] {
-  width: 120px;
+.filter-tab {
+  padding: 0.75rem 1.25rem;
+  border: none;
+  background: transparent;
+  color: #6B7280;
+  border-radius: 8px;
+  font-weight: 500;
   cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.95rem;
+}
+
+.filter-tab:hover {
+  background: #F3F4F6;
+  color: #374151;
+}
+
+.filter-tab.active {
+  background: #0066FF;
+  color: white;
 }
 
 .btn-refresh {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
+  padding: 0.85rem 1.75rem;
   background: linear-gradient(135deg, #0066FF, #00B4D8);
   color: white;
   border: none;
   border-radius: 12px;
   font-weight: 600;
+  font-size: 1rem;
   cursor: pointer;
   transition: all 0.3s;
 }
@@ -76,37 +86,53 @@
 
 .recommendations-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2rem;
+  padding: 1rem 0;
 }
 
 .recommendation-item {
   position: relative;
-}
-
-.recommendation-reason {
-  margin-top: 0.75rem;
-  padding: 0.5rem 0.75rem;
-  background: linear-gradient(135deg, #EBF5FF, #F0F9FF);
-  border-left: 3px solid #0066FF;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  color: #0066FF;
-  font-weight: 600;
+  display: flex;
+  flex-direction: column;
 }
 
 .loading-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 2rem;
+  padding: 1rem 0;
 }
 
 .skeleton-card {
-  height: 350px;
+  height: 400px;
   background: linear-gradient(90deg, #F3F4F6 25%, #E5E7EB 50%, #F3F4F6 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: 16px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: #6B7280;
+}
+
+.empty-icon {
+  font-size: 3rem;
+  color: #9CA3AF;
+  margin-bottom: 1rem;
+}
+
+.empty-state h2 {
+  font-size: 1.5rem;
+  color: #374151;
+  margin: 0.5rem 0;
+}
+
+.empty-state p {
+  margin: 0.5rem 0 0 0;
+  font-size: 1rem;
 }
 
 @keyframes shimmer {
@@ -114,10 +140,24 @@
   100% { background-position: -200% 0; }
 }
 
+@media (max-width: 1200px) {
+  .recommendations-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+}
+
 @media (max-width: 768px) {
+  .recommendations-page {
+    padding: 1rem;
+  }
+
   .recommendations-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .recommendations-header h1 {
+    font-size: 1.75rem;
   }
 
   .recommendations-controls {
@@ -125,12 +165,18 @@
     flex-direction: column;
   }
 
-  .diversity-control {
+  .filter-tabs {
     width: 100%;
+    flex-wrap: wrap;
   }
 
   .btn-refresh {
     width: 100%;
     justify-content: center;
+  }
+
+  .recommendations-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
   }
 }

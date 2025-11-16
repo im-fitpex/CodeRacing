@@ -49,25 +49,10 @@ function AppContent() {
         <Route path="/auth/callback" element={<AuthCallback />} />
         <Route path="/app/:id" element={<AppDetails />} />
         <Route path="/categories" element={<Categories />} />
+        <Route path="/category/:id" element={<Categories />} />
         <Route path="/search" element={<Search />} />
-        
-        {/* Protected Routes */}
-        <Route 
-          path="/recommendations" 
-          element={
-            <ProtectedRoute>
-              <Recommendations />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/video-feed" 
-          element={
-            <ProtectedRoute>
-              <VideoFeed />
-            </ProtectedRoute>
-          } 
-        />
+        <Route path="/recommendations" element={<Recommendations />} />
+        <Route path="/video-feed" element={<VideoFeed />} />
       </Routes>
 
       {/* AI Chat Bot - показывается везде кроме видео */}

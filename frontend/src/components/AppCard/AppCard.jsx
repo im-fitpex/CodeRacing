@@ -16,7 +16,7 @@ const AppCard = ({ app }) => {
   return (
     <motion.div
       className="app-card"
-      onClick={() => navigate(`/app/${app.id}`)}
+      onClick={() => navigate(`/app/${app.id || app.app_id}`)}
       whileHover={{ y: -4, boxShadow: '0 8px 24px rgba(0, 102, 255, 0.15)' }}
       transition={{ duration: 0.2 }}
     >
@@ -32,13 +32,13 @@ const AppCard = ({ app }) => {
       )}
 
       <div className="app-card-icon">
-        <img src={app.iconUrl} alt={app.name} />
+        <img src={app.icon_url || app.iconUrl} alt={app.name} />
       </div>
 
       <div className="app-card-content">
         <h3 className="app-name">{app.name}</h3>
         <p className="app-developer">{app.developer}</p>
-        <p className="app-description">{app.shortDescription}</p>
+        <p className="app-description">{app.short_description || app.shortDescription}</p>
 
         <div className="app-meta">
           <div className="app-rating">
@@ -54,7 +54,11 @@ const AppCard = ({ app }) => {
 
         <div className="app-footer">
           <span className="app-price">
-            {app.isFree ? 'Бесплатно' : `${app.price} ₽`}
+            {app.isFree !== undefined ? (
+              app.isFree ? 'Бесплатно' : `${app.price || 0} ₽`
+            ) : (
+              'Бесплатно'
+            )}
           </span>
           <span className="app-age">{app.ageRating}</span>
         </div>

@@ -28,7 +28,7 @@ public class VideoFeedService {
                 v.duration_sec, v.is_playable, v.demo_url, v.demo_time_limit_sec,
                 v.orientation, v.views, v.likes, v.created_at
             FROM rustore.video_clips v
-            JOIN rustore.apps a ON v.app_id = a.id
+            LEFT JOIN rustore.apps a ON v.app_id = a.id
             WHERE v.app_id NOT IN (
                 SELECT app_id FROM rustore.not_interested WHERE user_id = ?
             )
@@ -95,7 +95,7 @@ public class VideoFeedService {
 
     public boolean toggleLike(Integer userId, UUID videoId) {
         // Check if already liked
-        String checkSql = "SELECT count() FROM rustore.video_interactions WHERE user_id = ? AND video_id = ? AND interaction_type = 'like'";
+        String checkSql = "SELECT COUNT(*) FROM rustore.video_interactions WHERE user_id = ? AND video_id = ? AND interaction_type = 'like'";
         int count = jdbcTemplate.queryForObject(checkSql, Integer.class, userId, videoId);
 
         if (count > 0) {
@@ -128,18 +128,18 @@ public class VideoFeedService {
         String appIdSql = "SELECT app_id FROM rustore.video_clips WHERE id = ?";
         Integer appId = jdbcTemplate.queryForObject(appIdSql, Integer.class, videoId);
 
-        String checkSql = "SELECT count() FROM rustore.wishlist WHERE user_id = ? AND app_id = ?";
+        String checkSql = "SELECT COUNT(*) FROM rustore.wishlist WHERE user_id = ? AND app_id = ?";
         int count = jdbcTemplate.queryForObject(checkSql, Integer.class, userId, appId);
 
         if (count > 0) {
             // Remove from wishlist
-            String deleteSql = "ALTER TABLE rustore.wishlist DELETE WHERE user_id = ? AND app_id = ?";
+            String deleteSql = "DELETE FROM rustore.wishlist WHERE user_id = ? AND app_id = ?";
             jdbcTemplate.update(deleteSql, userId, appId);
             return false;
         } else {
             // Add to wishlist
-            String insertSql = "INSERT INTO rustore.wishlist (user_id, app_id, added_from_video, added_at) VALUES (?, ?, ?, now())";
-            jdbcTemplate.update(insertSql, userId, appId, videoId);
+            String insertSql = "INSERT INTO rustore.wishlist (user_id, app_id, added_at) VALUES (?, ?, now())";
+            jdbcTemplate.update(insertSql, userId, appId);
             return true;
         }
     }

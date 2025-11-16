@@ -52,3 +52,58 @@ CREATE TABLE IF NOT EXISTS rustore.screenshots (
     ) ENGINE = MergeTree()
     ORDER BY (app_id, order_index)
     SETTINGS index_granularity = 8192;
+
+-- Видео клипы
+CREATE TABLE IF NOT EXISTS rustore.video_clips (
+    id UUID DEFAULT generateUUIDv4(),
+    app_id UInt32,
+    title String,
+    description String,
+    video_url String,
+    thumbnail_url String,
+    duration_sec UInt16 DEFAULT 0,
+    is_playable UInt8 DEFAULT 1,
+    demo_url String DEFAULT '',
+    demo_time_limit_sec UInt16 DEFAULT 90,
+    orientation String DEFAULT 'vertical',
+    views UInt64 DEFAULT 0,
+    likes UInt64 DEFAULT 0,
+    created_at DateTime DEFAULT now(),
+    updated_at DateTime DEFAULT now(),
+    INDEX idx_app_id app_id TYPE minmax GRANULARITY 4
+) ENGINE = MergeTree()
+ORDER BY (app_id, created_at)
+SETTINGS index_granularity = 8192;
+
+-- Взаимодействия с видео
+CREATE TABLE IF NOT EXISTS rustore.video_interactions (
+    id UUID DEFAULT generateUUIDv4(),
+    user_id UInt32,
+    video_id UUID,
+    interaction_type String,
+    watch_duration_sec UInt16 DEFAULT 0,
+    demo_played_sec UInt16 DEFAULT 0,
+    timestamp DateTime DEFAULT now(),
+    session_id String DEFAULT ''
+) ENGINE = MergeTree()
+ORDER BY (user_id, timestamp)
+SETTINGS index_granularity = 8192;
+
+-- "Не интересует" для видео
+CREATE TABLE IF NOT EXISTS rustore.not_interested (
+    user_id UInt32,
+    app_id UInt32,
+    reason String DEFAULT 'not_interested',
+    marked_at DateTime DEFAULT now()
+) ENGINE = MergeTree()
+ORDER BY (user_id, app_id)
+SETTINGS index_granularity = 8192;
+
+-- Избранное пользователей
+CREATE TABLE IF NOT EXISTS rustore.wishlist (
+    user_id UInt32,
+    app_id UInt32,
+    added_at DateTime DEFAULT now()
+) ENGINE = MergeTree()
+ORDER BY (user_id, app_id)
+SETTINGS index_granularity = 8192;

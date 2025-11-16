@@ -24,11 +24,18 @@ const Search = () => {
 
     setLoading(true);
     try {
-      const response = await fetch(
-        `http://localhost:8080/api/apps/search?query=${encodeURIComponent(searchQuery)}`
-      );
+      const response = await fetch('http://127.0.0.1:8000/search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: searchQuery,
+          top_k: 10,
+        }),
+      });
       const data = await response.json();
-      setResults(data);
+      setResults(data.results || []);
     } catch (error) {
       console.error('Search error:', error);
     } finally {
@@ -61,7 +68,7 @@ const Search = () => {
           <p className="results-count">Найдено: {results.length} приложений</p>
           <div className="apps-grid">
             {results.map((app) => (
-              <AppCard key={app.id} app={app} />
+              <AppCard key={app.app_id} app={app} />
             ))}
           </div>
         </motion.div>

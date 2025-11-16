@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FiGrid } from 'react-icons/fi';
 import CategoryCard from '../../components/CategoryCard/CategoryCard';
@@ -15,10 +15,21 @@ const Categories = () => {
   const [loading, setLoading] = useState(true);
   const [filterType, setFilterType] = useState('all'); // all, app, game
   const navigate = useNavigate();
+  const { id: categoryIdFromUrl } = useParams();
 
   useEffect(() => {
     loadCategories();
   }, []);
+
+  useEffect(() => {
+    if (categoryIdFromUrl) {
+      // Если есть ID в URL, найти категорию и выбрать её
+      const category = categories.find(cat => cat.id === parseInt(categoryIdFromUrl));
+      if (category) {
+        setSelectedCategory(category);
+      }
+    }
+  }, [categoryIdFromUrl, categories]);
 
   useEffect(() => {
     if (selectedCategory) {
@@ -30,9 +41,13 @@ const Categories = () => {
     setLoading(true);
     try {
       const response = await categoriesAPI.getAll();
-      setCategories(response.data);
+      console.log('Categories response:', response);
+      const data = Array.isArray(response.data) ? response.data : [];
+      console.log('Categories loaded:', data);
+      setCategories(data);
     } catch (error) {
       console.error('Error loading categories:', error);
+      setCategories([]);
     } finally {
       setLoading(false);
     }
@@ -42,9 +57,13 @@ const Categories = () => {
     setLoading(true);
     try {
       const response = await appsAPI.getByCategory(categoryId);
-      setApps(response.data);
+      console.log('Apps by category response:', response);
+      const data = Array.isArray(response.data) ? response.data : [];
+      console.log('Apps loaded for category', categoryId, ':', data);
+      setApps(data);
     } catch (error) {
-      console.error('Error loading apps:', error);
+      console.error('Error loading apps for category', categoryId, ':', error);
+      setApps([]);
     } finally {
       setLoading(false);
     }

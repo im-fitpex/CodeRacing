@@ -1,37 +1,49 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import AppCard from '../../components/AppCard/AppCard';
-import { useAuth } from '../../contexts/AuthContext';
-import { FiRefreshCw, FiSliders } from 'react-icons/fi';
+import { FiRefreshCw, FiSliders, FiTrendingUp } from 'react-icons/fi';
+import { appsAPI } from '../../services/api';
 import './Recommendations.css';
 
 const Recommendations = () => {
-  const { user, token } = useAuth();
   const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [diversityFactor, setDiversityFactor] = useState(0.3);
+  const [filterType, setFilterType] = useState('all'); // all, popular, editor-choice, new
 
   useEffect(() => {
-    if (user) {
-      loadRecommendations();
-    }
-  }, [user, diversityFactor]);
+    loadRecommendations();
+  }, [diversityFactor, filterType]);
 
   const loadRecommendations = async () => {
     setLoading(true);
     try {
-      const response = await fetch(
-        `http://localhost:8080/api/recommendations/personalized?limit=30&diversityFactor=${diversityFactor}`,
-        {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        }
-      );
-      const data = await response.json();
-      setRecommendations(data);
+      let response;
+      
+      // Загружаем рекомендации на основе выбранного типа
+      switch(filterType) {
+        case 'popular':
+          response = await appsAPI.getPopular();
+          break;
+        case 'editor-choice':
+          response = await appsAPI.getEditorChoice();
+          break;
+        case 'new':
+          response = await appsAPI.getNew();
+          break;
+        default:
+          // По умолчанию показываем комбинацию популярных и рекомендованных
+          const [popular, editorChoice] = await Promise.all([
+            appsAPI.getPopular(),
+            appsAPI.getEditorChoice()
+          ]);
+          response = { data: [...(editorChoice.data || []), ...(popular.data || [])] };
+      }
+      
+      setRecommendations(response.data || []);
     } catch (error) {
       console.error('Error loading recommendations:', error);
+      setRecommendations([]);
     } finally {
       setLoading(false);
     }
@@ -42,23 +54,35 @@ const Recommendations = () => {
       <div className="recommendations-header">
         <div>
           <h1>🎯 Рекомендации для вас</h1>
-          <p>Подобрано специально на основе ваших интересов</p>
+          <p>Популярные и рекомендуемые приложения</p>
         </div>
 
         <div className="recommendations-controls">
-          <div className="diversity-control">
-            <FiSliders />
-            <label>
-              Разнообразие
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.1"
-                value={diversityFactor}
-                onChange={(e) => setDiversityFactor(parseFloat(e.target.value))}
-              />
-            </label>
+          <div className="filter-tabs">
+            <button
+              className={`filter-tab ${filterType === 'all' ? 'active' : ''}`}
+              onClick={() => setFilterType('all')}
+            >
+              Все
+            </button>
+            <button
+              className={`filter-tab ${filterType === 'popular' ? 'active' : ''}`}
+              onClick={() => setFilterType('popular')}
+            >
+              Популярное
+            </button>
+            <button
+              className={`filter-tab ${filterType === 'editor-choice' ? 'active' : ''}`}
+              onClick={() => setFilterType('editor-choice')}
+            >
+              Выбор редакции
+            </button>
+            <button
+              className={`filter-tab ${filterType === 'new' ? 'active' : ''}`}
+              onClick={() => setFilterType('new')}
+            >
+              Новинки
+            </button>
           </div>
 
           <button className="btn-refresh" onClick={loadRecommendations}>
@@ -74,7 +98,7 @@ const Recommendations = () => {
             <div key={i} className="skeleton-card" />
           ))}
         </div>
-      ) : (
+      ) : recommendations.length > 0 ? (
         <motion.div
           className="recommendations-grid"
           initial={{ opacity: 0 }}
@@ -82,18 +106,21 @@ const Recommendations = () => {
         >
           {recommendations.map((app) => (
             <motion.div
-              key={app.appId}
+              key={app.id || app.app_id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               className="recommendation-item"
             >
               <AppCard app={app} />
-              <div className="recommendation-reason">
-                {app.recommendationReason}
-              </div>
             </motion.div>
           ))}
         </motion.div>
+      ) : (
+        <div className="empty-state">
+          <FiTrendingUp className="empty-icon" />
+          <h2>Рекомендаций не найдено</h2>
+          <p>Попробуйте обновить или выбрать другой фильтр</p>
+        </div>
       )}
     </div>
   );

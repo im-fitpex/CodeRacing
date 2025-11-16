@@ -114,3 +114,15 @@ INSERT INTO rustore.screenshots (id, app_id, url, order_index) VALUES
 INSERT INTO rustore.users (id, username, email, vk_id, is_admin) VALUES
                                                                      (1, 'admin', 'admin@rustore.ru', 0, 1),
                                                                      (2, 'testuser', 'test@example.com', 12345678, 0);
+
+-- Insert Video Clips
+INSERT INTO rustore.video_clips (app_id, title, description, video_url, thumbnail_url, duration_sec, is_playable, demo_time_limit_sec, orientation, views, likes) VALUES
+-- Clash Royale videos
+(12, 'Clash Royale - топ колоды 2025', 'Лучшие стратегии для побед в 2025 году', '/videos/clashroyal.mp4', '/thumbnails/clash_1.jpg', 330, 1, 90, 'vertical', 680000, 45000),
+(12, 'Как разобраться новичку в Clash Royale', 'Полное руководство для новых игроков', '/videos/clashroyal.mp4', '/thumbnails/clash_2.jpg', 330, 1, 90, 'vertical', 450000, 32000),
+(12, 'Секреты быстрой прокачки', 'Как эффективно прокачивать карты', '/videos/clashroyal.mp4', '/thumbnails/clash_3.jpg', 330, 1, 90, 'vertical', 320000, 24000),
+
+-- Яндекс Go videos
+(6, 'Яндекс Go - экономия на поездках', 'Лайфхаки для пользователей', '/videos/yandexgo.mp4', '/thumbnails/yandexgo_1.jpg', 140, 1, 90, 'vertical', 189000, 11200),
+(6, 'Каршеринг в Яндекс Go', 'Как арендовать автомобиль быстро', '/videos/yandexgo.mp4', '/thumbnails/yandexgo_2.jpg', 140, 1, 90, 'vertical', 156000, 8900),
+(6, 'Доставка в Яндекс Go', 'Быстрая доставка еды и товаров', '/videos/yandexgo.mp4', '/thumbnails/yandexgo_3.jpg', 140, 1, 90, 'vertical', 98000, 5600);

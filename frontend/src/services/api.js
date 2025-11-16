@@ -10,6 +10,20 @@ const api = axios.create({
   },
 });
 
+// Add response interceptor for debugging
+api.interceptors.response.use(
+  response => response,
+  error => {
+    console.error('API Error:', {
+      message: error.message,
+      url: error.config?.url,
+      status: error.response?.status,
+      data: error.response?.data,
+    });
+    return Promise.reject(error);
+  }
+);
+
 // Apps API
 export const appsAPI = {
   getAll: () => api.get('/apps'),

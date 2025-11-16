@@ -10,8 +10,8 @@ const RecommendationWeb = ({ userId, onClose }) => {
   const [loading, setLoading] = useState(true);
   const [selectedNode, setSelectedNode] = useState(null);
   const [dimensions, setDimensions] = useState({
-    width: window.innerWidth * 0.9,
-    height: window.innerHeight * 0.85,
+    width: window.innerWidth * 0.95,
+    height: window.innerHeight * 0.9,
   });
   const [hoveredNode, setHoveredNode] = useState(null);
 
@@ -23,8 +23,8 @@ const RecommendationWeb = ({ userId, onClose }) => {
     
     const handleResize = () => {
       setDimensions({
-        width: window.innerWidth * 0.9,
-        height: window.innerHeight * 0.85,
+        width: window.innerWidth * 0.95,
+        height: window.innerHeight * 0.9,
       });
     };
     
@@ -40,9 +40,9 @@ const RecommendationWeb = ({ userId, onClose }) => {
       fg.d3Force('link')
         .distance((link) => {
           const sim = link.similarity || 50;
-          if (sim > 90) return 400;    // Похожие приложения - средняя длина
-          if (sim > 70) return 600;    // Менее похожие - больше длина
-          return 1200;                 // РАЗНЫЕ ПАУТИНЫ - ОЧЕНЬ БОЛЬШОЕ расстояние!
+          if (sim > 90) return 350;    // Похожие приложения - короче
+          if (sim > 70) return 500;    // Менее похожие - средняя длина
+          return 250;                 // РАЗНЫЕ ПАУТИНЫ - ЕЩЕ ДАЛЬШЕ!
         })
         .strength(0.5);
       
@@ -185,18 +185,18 @@ const RecommendationWeb = ({ userId, onClose }) => {
             d3AlphaDecay={0.01}
             nodeRelSize={10}
             
-            // ДЛИНА ВЕТОК - УВЕЛИЧЕНА В 3-4 РАЗА!
+            // ДЛИНА ВЕТОК - МАКСИМАЛЬНО РАЗВЕРНУТО!
             linkDistance={(link) => {
               const sim = link.similarity || 50;
-              if (sim > 90) return 400;   // было ~120
-              if (sim > 70) return 600;   // было ~200
-              return 900;                 // было ~350
+              if (sim > 90) return 500;   
+              if (sim > 70) return 700;   
+              return 1000;                
             }}
             
-            nodeVal={(node) => node.is_installed ? 60 : 50}
+            nodeVal={(node) => node.is_installed ? 80 : 70}
             
             nodeCanvasObject={(node, ctx, globalScale) => {
-              const nodeSize = node.is_installed ? 40 : 32;
+              const nodeSize = node.is_installed ? 60 : 50;
               const img = imageCache.current[node.id];
               
               // Draw icon image
@@ -251,54 +251,15 @@ const RecommendationWeb = ({ userId, onClose }) => {
                 }
               }
               
-              // TEXT - только при наведении или установленные
-              if (hoveredNode === node.id || node.is_installed || globalScale > 1.5) {
-                const label = node.name;
-                const fontSize = 13;
-                ctx.font = `bold ${fontSize}px Arial`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                
-                const textWidth = ctx.measureText(label).width;
-                const padding = 6;
-                const textX = node.x;
-                const textY = node.y + nodeSize / 2 + 25;
-                
-                // Background with rounded corners
-                const rectHeight = fontSize + padding * 2;
-                const rectWidth = textWidth + padding * 2;
-                const cornerRadius = 8;
-                
-                ctx.fillStyle = 'rgba(31, 41, 55, 0.95)';
-                ctx.beginPath();
-                ctx.moveTo(textX - rectWidth / 2 + cornerRadius, textY - rectHeight / 2);
-                ctx.lineTo(textX + rectWidth / 2 - cornerRadius, textY - rectHeight / 2);
-                ctx.quadraticCurveTo(textX + rectWidth / 2, textY - rectHeight / 2, textX + rectWidth / 2, textY - rectHeight / 2 + cornerRadius);
-                ctx.lineTo(textX + rectWidth / 2, textY + rectHeight / 2 - cornerRadius);
-                ctx.quadraticCurveTo(textX + rectWidth / 2, textY + rectHeight / 2, textX + rectWidth / 2 - cornerRadius, textY + rectHeight / 2);
-                ctx.lineTo(textX - rectWidth / 2 + cornerRadius, textY + rectHeight / 2);
-                ctx.quadraticCurveTo(textX - rectWidth / 2, textY + rectHeight / 2, textX - rectWidth / 2, textY + rectHeight / 2 - cornerRadius);
-                ctx.lineTo(textX - rectWidth / 2, textY - rectHeight / 2 + cornerRadius);
-                ctx.quadraticCurveTo(textX - rectWidth / 2, textY - rectHeight / 2, textX - rectWidth / 2 + cornerRadius, textY - rectHeight / 2);
-                ctx.closePath();
-                ctx.fill();
-                
-                // Border
-                ctx.strokeStyle = getCategoryColor(node.category);
-                ctx.lineWidth = 2;
-                ctx.stroke();
-                
-                // Text
-                ctx.fillStyle = '#FFFFFF';
-                ctx.fillText(label, textX, textY);
-              }
+              
+              // TEXT - скрыто полностью
             }}
             
             nodePointerAreaPaint={(node, color, ctx) => {
-              const nodeSize = node.is_installed ? 40 : 32;
+              const nodeSize = node.is_installed ? 60 : 50;
               ctx.fillStyle = color;
               ctx.beginPath();
-              ctx.arc(node.x, node.y, nodeSize / 2 + 5, 0, 2 * Math.PI);
+              ctx.arc(node.x, node.y, nodeSize / 2 + 8, 0, 2 * Math.PI);
               ctx.fill();
             }}
             
@@ -318,9 +279,7 @@ const RecommendationWeb = ({ userId, onClose }) => {
             onNodeClick={handleNodeClick}
             
             onEngineStop={() => {
-              if (graphRef.current) {
-                graphRef.current.zoomToFit(500, 200);
-              }
+              // Auto-zoom disabled
             }}
           />
         )}
