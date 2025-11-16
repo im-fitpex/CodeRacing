@@ -4,7 +4,7 @@
 
 ## 📋 Требования
 
-- **Java**: JDK 11+
+- **Java**: JDK 17
 - **Node.js**: 16+ (с npm)
 - **Python**: 3.8+
 - **ClickHouse**: 23.8.16.16+
@@ -56,7 +56,7 @@ clickhouse-client
 ## 🔧 Backend Setup
 
 ### Зависимости:
-- Spring Boot 3.2
+- Spring Boot 3.5.7
 - JDBC для ClickHouse
 - Maven 3.8+
 
@@ -409,6 +409,7 @@ MIT License - см. `LICENSE` файл
 ## 👨‍💻 Автор
 
 [im-fitpex](https://github.com/im-fitpex)
+[Darit0](https://github.com/Darit0)
 
 ---
 
